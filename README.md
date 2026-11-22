@@ -1,6 +1,8 @@
-# NutriTrack Calorie Tracker
+# Nourish
 
 A browser-based calorie and nutrition tracker. Meal analysis and nutritionist chat use the Puter.js SDK and require each user to sign in with their own Puter account. No app-owned API key is required in the frontend.
+
+Meal reminders and scan alerts use browser notifications and need permission on each device over HTTPS. Scheduled reminders run while the app is open. On iPhone or iPad, add Nourish to the Home Screen before enabling notifications.
 
 ## Run locally
 
