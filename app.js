@@ -1331,10 +1331,10 @@ async function saveAccountProfileForm(event) {
 
 function getSavedTheme() {
   try {
-    return window.localStorage.getItem(THEME_STORAGE_KEY) === "light" ? "light" : "dark";
+    return window.localStorage.getItem(THEME_STORAGE_KEY) === "dark" ? "dark" : "light";
   } catch (error) {
     console.warn("Could not read the saved theme preference.", error);
-    return "dark";
+    return "light";
   }
 }
 

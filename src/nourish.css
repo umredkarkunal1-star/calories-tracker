@@ -2672,8 +2672,7 @@ body {
 }
 
 :root[data-theme="dark"] #dashboard-view .activity-food-art {
-  opacity: .46;
-  mix-blend-mode: screen;
+  display: none;
 }
 
 :root[data-theme="dark"] #dashboard-view .activity-grid-line {

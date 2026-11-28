@@ -86,7 +86,7 @@ Never silently alter Puter keys or app-origin data.
 
 - Primary light palette: cream `#f7f5ed`, card `#fffdf7`, ink `#183b2d`, muted `#69756c`, sage `#6e8753`, and line `#dedfd5`.
 - Base stylesheet palette: page `#f6f5ef`, surface `#fffefa`, ink `#26322a`, muted `#58665d`, border `#e2e4da`, green `#2f6248`.
-- Dark mode is controlled by `document.documentElement.dataset.theme` and persisted in `nourish:theme`.
+- Light mode is the default. Dark mode is controlled by `document.documentElement.dataset.theme` and persisted in `nourish:theme`.
 - Preserve current warm, natural, restrained dashboard language. Avoid gradients unless an existing component already uses a conic/radial progress pattern.
 - Do not redesign unrelated cards.
 - Desktop sidebar: 80px collapsed and 248px expanded. Tablet: compact 76px rail. Mobile: fixed bottom navigation.

@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <meta name="theme-color" content="#101b17">
+    <meta name="theme-color" content="#f7f5ed">
     <meta name="description" content="A calmer way to notice your meals, nutrition, and daily progress.">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Calorise">
@@ -12,6 +12,8 @@
         const savedTheme = window.localStorage.getItem("nourish:theme");
         if (savedTheme === "light" || savedTheme === "dark") {
           document.documentElement.dataset.theme = savedTheme;
+          document.querySelector('meta[name="theme-color"]').content =
+            savedTheme === "dark" ? "#101b17" : "#f7f5ed";
         }
         const savedTextSize = window.localStorage.getItem("nourish:text-size");
         if (["normal", "large", "extra-large"].includes(savedTextSize)) {

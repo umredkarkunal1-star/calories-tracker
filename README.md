@@ -18,7 +18,7 @@ user data continues to load.
 - Profile, goals, theme, notification, and reminder settings.
 - CSV export and printable weekly report.
 - Desktop hover sidebar and mobile bottom navigation.
-- Light/dark themes and reduced-motion support.
+- Light theme by default, optional saved dark theme, and reduced-motion support.
 
 ## Technology
 
@@ -118,6 +118,7 @@ The React shell fetches `public/legacy.html`, then dynamically imports `app.js`.
 - Meal images: `nutritrack/scans/`.
 - Profile pictures: `nutritrack/profile-pictures/`.
 - Theme: browser `localStorage`.
+- Theme defaults to light; a user's dark-mode choice is saved in browser `localStorage`.
 - Reminder delivery: browser `localStorage`.
 - Name prompt skip: browser `sessionStorage`.
 

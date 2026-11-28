@@ -78,7 +78,8 @@ Actual values from `src/nourish.css`:
 - Line soft: `#26392f`
 - Danger: `#e18b7d`
 
-The dark theme is selected by `html[data-theme="dark"]` and saved as `nourish:theme`.
+Light mode is the default. The dark theme is selected by `html[data-theme="dark"]`
+and saved as `nourish:theme`.
 
 ## 5. Typography
 
