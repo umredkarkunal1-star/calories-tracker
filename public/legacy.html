@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#fafafa">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#101b17">
   <meta name="description" content="A clear, dashboard-first calorie and nutrition tracker.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,14 +15,22 @@
 <body>
   <div id="auth-screen" class="auth-screen">
     <div class="auth-card">
-      <div class="auth-copy-column">
+      <header class="mobile-auth-header">
+        <a class="mobile-auth-brand" href="#" aria-label="Nourish home">
+          <img src="/calorise-logo.png" alt="Nourish logo">
+          <span>Nourish</span>
+        </a>
+      </header>
+      <div id="mobile-auth-login" class="auth-copy-column">
         <a class="brand brand-auth" href="#" aria-label="Nourish home">
-          <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M16 28V15"/><path d="M16 20C8.5 20 5 15.5 6 8c6.5 0 10 3.5 10 12Z"/><path d="M16 16C16 8.5 20.5 5 28 6c0 6.5-3.5 10-12 10Z"/></svg></span>
-          <span class="brand-name">nourish<span class="brand-period">.</span></span>
+          <img class="brand-logo" src="/calorise-logo.png" alt="Nourish logo">
+          <span class="brand-name">Nourish</span>
         </a>
         <p class="eyebrow auth-eyebrow">A calmer way to track</p>
+        <p class="mobile-auth-eyebrow">WELCOME BACK</p>
         <h1>Small choices.<br><em>Good days.</em></h1>
         <p class="auth-copy">A little more mindful, a lot less complicated. Keep a simple eye on what you eat—and make space for what feels good.</p>
+        <p class="mobile-auth-copy">A little more mindful, a lot less complicated.</p>
         <p class="auth-action-label">Pick up where you left off</p>
         <button id="sign-in-button" class="button button-primary auth-button" type="button">
           <span class="auth-button-icon" aria-hidden="true">
@@ -32,6 +40,7 @@
           <span class="auth-button-arrow" aria-hidden="true">↗</span>
         </button>
         <p class="auth-guidance">Secure sign-in, handled by Puter. No new password to remember.</p>
+        <p class="mobile-auth-guidance">Secure sign-in, handled by Puter.</p>
         <p id="auth-message" class="auth-message" role="status"></p>
         <div class="auth-footer-note">
           <strong>Progress, not perfection.</strong>
@@ -39,7 +48,7 @@
         </div>
       </div>
       <div class="auth-art">
-        <img class="auth-food-image" src="/food-bowl.webp" alt="An overhead bowl of yogurt with strawberries, blueberries, peach, granola, and honey">
+        <img class="auth-food-image" src="/food-bowl.webp" alt="Yogurt bowl topped with strawberries, blueberries, granola, peach, and honey">
         <p class="auth-art-label"><span aria-hidden="true">✳</span> A little more balance</p>
         <div class="auth-summary">
           <div class="auth-summary-top">
@@ -56,35 +65,37 @@
         <p class="auth-art-caption"><span aria-hidden="true">✳</span> Good food. A clearer picture.</p>
       </div>
     </div>
+    <p class="mobile-auth-footer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 3.5C13 4 7.5 7.5 7.5 13c0 2 1.2 3.7 3.2 4.5C14.5 14.8 17.7 10.5 20.5 3.5ZM7.5 13c0 4.5-2.5 6.5-5 7.5M7.5 13c1.5 1 3.3 1.5 5.5 1.5"/></svg> Good food. A clearer picture.</p>
   </div>
 
-  <div id="app-shell" class="app-shell" hidden>
+  <div id="app-shell" class="app-shell sidebar-collapsed" hidden>
     <aside class="sidebar">
-      <a class="brand" href="/overview" data-nav="dashboard" aria-label="Nourish overview">
-        <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M16 28V15"/><path d="M16 20C8.5 20 5 15.5 6 8c6.5 0 10 3.5 10 12Z"/><path d="M16 16C16 8.5 20.5 5 28 6c0 6.5-3.5 10-12 10Z"/></svg></span>
-        <span class="brand-name">nourish<span class="brand-period">.</span></span>
-      </a>
-      <div class="side-label">A calmer way to track</div>
-      <nav class="side-nav" aria-label="Main navigation">
+      <div class="sidebar-brand-row">
+        <a class="brand" href="/overview" data-nav="dashboard" aria-label="Nourish overview">
+          <img class="brand-logo" src="/calorise-logo.png" alt="Nourish logo">
+          <span class="brand-name">Nourish</span>
+        </a>
+      </div>
+      <nav id="primary-navigation" class="side-nav" aria-label="Main navigation">
         <button class="nav-link active" type="button" data-nav="dashboard" aria-label="Overview">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3.5 10 8.5-6.5 8.5 6.5v10.5h-17V10Z"/><path d="M9 20.5v-6h6v6"/></svg>
           <span data-mobile-label="Home">Overview</span>
         </button>
         <button class="nav-link" type="button" data-nav="history" aria-label="Scan history">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h16M4 12h16M4 18.5h10"/><circle cx="3.5" cy="5.5" r=".5"/><circle cx="3.5" cy="12" r=".5"/><circle cx="3.5" cy="18.5" r=".5"/></svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 8.5A8.5 8.5 0 1 1 3.8 14"/><path d="M3.5 4.5v5h5"/><path d="M12 7.5v5l3 1.8"/></svg>
           <span data-mobile-label="Scan">Scan history</span>
           <span id="history-count" class="nav-count">0</span>
         </button>
         <button class="nav-link" type="button" data-nav="daily" aria-label="Daily history">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M7.5 3.5v3M16.5 3.5v3M3.5 9.5h17M8 13h3m-3 3h7"/></svg>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M7.5 3.5v3M16.5 3.5v3M3.5 9.5h17"/><circle cx="8" cy="13" r=".6"/><circle cx="12" cy="13" r=".6"/><circle cx="16" cy="13" r=".6"/><circle cx="8" cy="16.5" r=".6"/><circle cx="12" cy="16.5" r=".6"/></svg>
           <span data-mobile-label="Daily">Daily history</span>
         </button>
         <button class="nav-link" type="button" data-nav="nutritionist" aria-label="Nutritionist">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H6l-3 2v-6a7.5 7.5 0 1 1 17-3.5Z"/><path d="m12 7 .7 2.3L15 10l-2.3.7L12 13l-.7-2.3L9 10l2.3-.7L12 7Z"/></svg>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 11.5a8.5 8.5 0 0 1-8.5 8.5H5l-2 1.5v-6a8.5 8.5 0 1 1 17.5-4Z"/><circle cx="8" cy="12" r=".6"/><circle cx="12" cy="12" r=".6"/><circle cx="16" cy="12" r=".6"/></svg>
           <span data-mobile-label="Coach">Nutritionist</span>
         </button>
         <button class="nav-link" type="button" data-nav="account" aria-label="Account">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="m19.4 15 .1.1a1.7 1.7 0 0 1-2.4 2.4l-.1-.1a1.7 1.7 0 0 0-2.9 1.2v.2a1.7 1.7 0 0 1-3.4 0v-.2a1.7 1.7 0 0 0-2.9-1.2l-.1.1a1.7 1.7 0 0 1-2.4-2.4l.1-.1a1.7 1.7 0 0 0-1.2-2.9H4a1.7 1.7 0 0 1 0-3.4h.2a1.7 1.7 0 0 0 1.2-2.9l-.1-.1a1.7 1.7 0 0 1 2.4-2.4l.1.1a1.7 1.7 0 0 0 2.9-1.2V4a1.7 1.7 0 0 1 3.4 0v.2a1.7 1.7 0 0 0 2.9 1.2l.1-.1a1.7 1.7 0 0 1 2.4 2.4l-.1.1a1.7 1.7 0 0 0 1.2 2.9h.2a1.7 1.7 0 0 1 0 3.4h-.2a1.7 1.7 0 0 0-1.2.9Z"/></svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>
           <span data-mobile-label="Account">Account</span>
         </button>
       </nav>
@@ -108,12 +119,14 @@
       <header class="topbar">
         <div class="breadcrumb"><span>NOURISH</span><span class="crumb-divider">/</span><strong id="page-title">Overview</strong></div>
         <div class="topbar-right">
-          <label class="overview-date-label" for="overview-date">Today</label>
-          <input id="overview-date" class="overview-date-input" type="date" aria-label="Overview date">
-          <span class="today-label" id="today-label"></span>
-          <button class="button button-primary button-small" type="button" data-open-scan>
-            <span class="plus">+</span> New scan
-          </button>
+          <div class="overview-date-context" aria-label="Current date">
+            <span class="overview-date-context-marker" aria-hidden="true"></span>
+            <div class="overview-date-context-copy">
+              <span class="overview-date-kicker">Today</span>
+              <span class="today-label" id="today-label"></span>
+            </div>
+          </div>
+          <input id="overview-date" class="overview-date-input" type="date" aria-label="Overview date" hidden>
         </div>
       </header>
 
@@ -124,9 +137,10 @@
             <h1>Good food. A clearer picture.<span id="welcome-name" class="visually-hidden">there</span></h1>
             <p class="welcome-subtitle">A little awareness goes a long way.</p>
           </div>
-          <button class="button button-primary" type="button" data-open-scan>
+          <button id="dashboard-scan-button" class="button button-primary" type="button" data-open-scan data-camera-on-mobile>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8V5a1 1 0 0 1 1-1h3m8 0h3a1 1 0 0 1 1 1v3m0 8v3a1 1 0 0 1-1 1h-3m-8 0H5a1 1 0 0 1-1-1v-3"/><circle cx="12" cy="12" r="3.5"/></svg>
-            Scan a meal
+            <span class="desktop-scan-label">Scan a meal</span>
+            <span class="mobile-scan-label">Scan Food</span>
           </button>
         </div>
 
@@ -149,7 +163,7 @@
             </div>
           </section>
           <article class="overview-food-card">
-            <img src="/food-bowl.webp" alt="A nourishing bowl of colorful fresh food">
+            <img src="/food/03_salad.png" alt="A colorful quinoa salad with tomatoes, cucumber, olives, and feta" loading="lazy" decoding="async">
             <div class="overview-food-caption"><span>FOOD, IN FOCUS</span><p>Every meal is a moment to notice.</p></div>
             <button class="button button-primary overview-add-meal" type="button" data-open-scan>Add a meal <span aria-hidden="true">+</span></button>
           </article>
@@ -198,12 +212,32 @@
         </section>
 
         <div class="content-grid">
-          <section class="panel activity-panel">
-            <div class="panel-heading">
-              <div><p class="eyebrow">Your week</p><h2>Scan activity</h2></div>
-              <span class="subtle-pill">Last 7 days</span>
+          <section class="panel activity-panel" aria-labelledby="activity-title">
+            <img class="activity-food-art" src="/food/02_ramen.png" alt="" aria-hidden="true" loading="lazy" decoding="async">
+            <div class="activity-heading">
+              <div class="activity-heading-copy">
+                <h2 id="activity-title">Calories</h2>
+                <p class="activity-guide"><span class="activity-guide-mark" aria-hidden="true"></span><span id="activity-guide-label">Daily guide — 2,000 kcal</span></p>
+              </div>
             </div>
-            <div class="chart" id="activity-chart" aria-label="Scan activity for the last seven days"></div>
+            <div class="activity-chart-layout">
+              <div class="activity-y-axis" aria-hidden="true">
+                <span id="activity-y-max">3,000</span><span id="activity-y-upper">2,250</span><span id="activity-y-middle">1,500</span><span id="activity-y-quarter">750</span><span id="activity-y-zero">0</span>
+              </div>
+              <div class="activity-chart-stage">
+                <div class="activity-plot-area" aria-hidden="true">
+                  <span class="activity-grid-line" style="--grid-position: 0%"></span>
+                  <span class="activity-grid-line" style="--grid-position: 16.667%"></span>
+                  <span class="activity-grid-line" style="--grid-position: 33.333%"></span>
+                  <span class="activity-grid-line" style="--grid-position: 50%"></span>
+                  <span class="activity-grid-line" style="--grid-position: 66.667%"></span>
+                  <span class="activity-grid-line" style="--grid-position: 83.333%"></span>
+                  <span class="activity-grid-line activity-grid-line-bottom" style="--grid-position: 100%"></span>
+                  <span class="activity-guide-line"></span>
+                </div>
+                <div class="activity-days" id="activity-chart" role="group" aria-label="Daily calorie values for this week"></div>
+              </div>
+            </div>
           </section>
           <section class="panel insight-panel">
             <div class="insight-top">
@@ -232,18 +266,24 @@
           </div>
           <div id="recent-scans" class="recent-list"></div>
         </section>
+        <section class="panel favorites-panel">
+          <div class="panel-heading">
+            <div><p class="eyebrow">Quick add</p><h2>Favorites</h2></div>
+          </div>
+          <div id="favorites-scans" class="favorites-list"></div>
+        </section>
         <footer class="app-footer">Your data lives in your Puter account. &nbsp;·&nbsp; <a href="https://developer.puter.com" target="_blank" rel="noreferrer">Powered by Puter</a></footer>
       </section>
 
       <section id="history-view" class="view-section" hidden>
         <div class="welcome-row history-welcome">
-          <div><p class="eyebrow">Your personal food journal</p><h1>Scan history</h1><p class="welcome-subtitle">A record of the meals you’ve noticed along the way.</p></div>
+          <div><p class="eyebrow">Your food, in focus.</p><h1>A clearer picture, one scan at a time.</h1><p class="welcome-subtitle">A record of the meals you’ve noticed along the way.</p></div>
           <button class="button button-primary" type="button" data-open-scan><span class="plus">+</span> New scan</button>
         </div>
         <div class="scan-history-intro">
-          <img src="/food-bowl.webp" alt="Colorful fruit, yogurt and granola in a bowl">
-          <div><p class="eyebrow">A helpful estimate, every time</p><h2>Meals that make up your story.</h2><p>Search your saved scans, revisit a favorite, or edit the details when you need to.</p></div>
-          <button class="button button-primary" type="button" data-open-scan>Add a meal <span aria-hidden="true">+</span></button>
+          <img src="/food-bowl.webp" alt="A yogurt bowl topped with berries, peach, and granola" loading="lazy" decoding="async">
+          <div><p class="eyebrow">Upload or scan</p><h2>A clearer plate ahead.</h2><p>Scan a meal or upload a photo to get started. Search your saved scans whenever you need them.</p></div>
+          <button class="button button-primary" type="button" data-open-scan>Scan a meal <span aria-hidden="true">→</span></button>
         </div>
         <section class="panel history-panel">
           <div class="panel-heading">
@@ -372,7 +412,7 @@
         </div>
         <div class="nutritionist-feature-grid">
           <article class="nutritionist-guide-card">
-            <img src="/food-bowl.webp" alt="A colorful bowl of fruit, yogurt and granola">
+            <img src="/food/04_pancakes.png" alt="Pancakes with berries and maple syrup" loading="lazy" decoding="async">
             <div class="nutritionist-guide-copy"><p class="eyebrow">A supportive place to start</p><h2>Your AI nutrition guide</h2><p>Get general nutrition ideas grounded in your saved meals. No judgment, no perfect days required.</p><button class="button button-primary" type="button" data-open-ai-chat>Talk with your guide <span aria-hidden="true">→</span></button></div>
           </article>
           <section class="panel nutritionist-focus-card">
@@ -432,114 +472,136 @@
 
       <section id="account-view" class="view-section account-view" hidden>
         <div class="welcome-row account-welcome">
-          <div><p class="eyebrow">Your space</p><h1>Account</h1><p class="welcome-subtitle">Make Nourish feel a little more like yours.</p></div>
+          <div><p class="eyebrow">A calmer way to track</p><h1>Make it yours.</h1><p class="welcome-subtitle">Make Nourish feel a little more like yours.</p></div>
         </div>
         <div class="account-settings-grid">
-          <section class="panel account-panel account-profile-panel">
-            <div class="panel-heading"><div><p class="eyebrow">Profile</p><h2>Personal information</h2></div></div>
-            <div class="account-profile-summary">
-              <div class="account-summary-avatar"><span id="account-summary-initial">N</span><img id="account-summary-image" alt="" hidden></div>
-              <div><strong id="account-summary-name">Name not set</strong><span id="account-summary-email">Your account email</span></div>
-              <button id="edit-profile-button" class="button button-outline button-small" type="button">Edit profile</button>
-            </div>
-            <details id="account-profile-details" class="account-profile-details">
-              <summary>Edit profile details and photo</summary>
-            <div class="account-picture-row">
-              <div class="account-picture" id="account-picture-fallback" aria-hidden="true">N</div>
-              <img id="account-picture-preview" class="account-picture" alt="Profile picture preview" hidden>
-              <div class="account-picture-controls">
-                <strong>Profile picture</strong>
-                <span>Uploads are saved to Nourish files in your Puter cloud. Removing a Puter profile photo here only hides it in this app.</span>
-                <input id="account-picture-input" type="file" accept="image/*" hidden>
-                <div class="account-picture-actions">
-                  <button id="choose-profile-picture" class="button button-outline button-small" type="button">Choose photo</button>
-                  <button id="upload-profile-picture" class="button button-primary button-small" type="button" hidden>Retry upload</button>
-                  <button id="remove-profile-picture" class="text-button danger-text" type="button" hidden>Remove</button>
+          <div class="account-settings-main">
+            <div class="account-settings-top">
+              <section class="panel account-panel account-profile-panel">
+                <div class="panel-heading"><div><p class="eyebrow">Profile</p><h2>Personal information</h2></div></div>
+                <div class="account-profile-summary">
+                  <div class="account-summary-avatar"><span id="account-summary-initial">N</span><img id="account-summary-image" alt="" hidden></div>
+                  <div><strong id="account-summary-name">Name not set</strong><span id="account-summary-email">Your account email</span></div>
+                  <button id="edit-profile-button" class="button button-outline button-small" type="button">Edit profile</button>
                 </div>
-                <p id="account-picture-status" class="field-help" role="status">Choose an image to upload it to your Puter cloud.</p>
-                <p id="account-picture-error" class="inline-error" role="alert" hidden></p>
-              </div>
+                <details id="account-profile-details" class="account-profile-details">
+                  <summary>Edit profile details and photo</summary>
+                  <div class="account-picture-row">
+                    <div class="account-picture" id="account-picture-fallback" aria-hidden="true">N</div>
+                    <img id="account-picture-preview" class="account-picture" alt="Profile picture preview" hidden>
+                    <div class="account-picture-controls">
+                      <strong>Profile picture</strong>
+                      <span>Uploads are saved to your Puter cloud. Removing a Puter profile photo here only hides it in this app.</span>
+                      <input id="account-picture-input" type="file" accept="image/*" hidden>
+                      <div class="account-picture-actions">
+                        <button id="choose-profile-picture" class="button button-outline button-small" type="button">Choose photo</button>
+                        <button id="upload-profile-picture" class="button button-primary button-small" type="button" hidden>Retry upload</button>
+                        <button id="remove-profile-picture" class="text-button danger-text" type="button" hidden>Remove</button>
+                      </div>
+                      <p id="account-picture-status" class="field-help" role="status">Choose an image to upload it to your Puter cloud.</p>
+                      <p id="account-picture-error" class="inline-error" role="alert" hidden></p>
+                    </div>
+                  </div>
+                  <form id="account-profile-form" class="account-form">
+                    <label class="account-field" for="account-login-email">Puter login email
+                      <input id="account-login-email" type="email" readonly>
+                      <span class="field-help">This is the email used to sign in to Puter.</span>
+                    </label>
+                    <label class="account-field" for="account-username">Nourish username
+                      <input id="account-username" type="text" maxlength="32" autocomplete="username" pattern="[A-Za-z0-9._\-]{3,32}" title="Use 3–32 letters, numbers, periods, underscores, or hyphens.">
+                      <span class="field-help">This username is saved to your Nourish profile; it does not change your Puter username.</span>
+                    </label>
+                    <label class="account-field" for="account-email">Contact email
+                      <input id="account-email" type="email" maxlength="254" autocomplete="email" placeholder="name@example.com">
+                      <span class="field-help">Saved to your Nourish profile only; it does not change your Puter sign-in email.</span>
+                    </label>
+                    <label class="account-field" for="account-display-name">Nourish display name
+                      <input id="account-display-name" type="text" maxlength="64" autocomplete="name" required>
+                      <span class="field-help">This app-specific name appears in your sidebar and overview.</span>
+                    </label>
+                    <p id="account-profile-error" class="inline-error" role="alert" hidden></p>
+                    <button id="save-account-profile" class="button button-primary" type="submit">Save profile</button>
+                  </form>
+                </details>
+              </section>
+
+              <section class="panel account-panel account-preferences-panel">
+                <div class="panel-heading"><div><p class="eyebrow">Preferences</p><h2>App preferences</h2></div></div>
+                <div class="account-setting-row">
+                  <div><strong>Daily calorie guide</strong><span>A flexible reference, not a rule.</span></div>
+                  <div class="account-setting-value"><strong><span id="account-daily-target">2,000</span> kcal</strong><button class="text-button" type="button" data-edit-daily-target>Adjust</button></div>
+                </div>
+                <div class="preference-toggle-row">
+                  <div><strong>Dark mode</strong><span>Switch between the forest-dark and warm light themes. Your choice is saved on this device.</span></div>
+                  <label class="switch-control" for="account-dark-mode">
+                    <input id="account-dark-mode" type="checkbox" aria-describedby="account-theme-status">
+                    <span class="switch-track" aria-hidden="true"></span>
+                    <span class="visually-hidden">Use dark mode</span>
+                  </label>
+                </div>
+                <p id="account-theme-status" class="field-help" role="status" aria-live="polite"></p>
+                <label class="account-field text-size-setting" for="account-text-size">
+                  <strong>Text size</strong>
+                  <select id="account-text-size" aria-describedby="account-text-size-status">
+                    <option value="normal">Normal</option>
+                    <option value="large">Large</option>
+                    <option value="extra-large">Extra Large</option>
+                  </select>
+                  <span id="account-text-size-status" class="field-help" role="status">Normal text size is on. Saved on this device.</span>
+                </label>
+                <div class="preference-toggle-row">
+                  <div><strong>Food scan notifications</strong><span>Show a browser notification on this device when a scan is saved. Enable it separately on each device.</span></div>
+                  <label class="switch-control" for="account-notifications">
+                    <input id="account-notifications" type="checkbox">
+                    <span class="switch-track" aria-hidden="true"></span>
+                    <span class="visually-hidden">Food scan notifications</span>
+                  </label>
+                </div>
+                <p id="account-preferences-status" class="field-help" role="status">Preferences are saved to your Puter account.</p>
+              </section>
             </div>
-            <form id="account-profile-form" class="account-form">
-              <label class="account-field" for="account-login-email">Puter login email
-                <input id="account-login-email" type="email" readonly>
-                <span class="field-help">This is the email used to sign in to Puter.</span>
-              </label>
-              <label class="account-field" for="account-username">Nourish username
-                <input id="account-username" type="text" maxlength="32" autocomplete="username" pattern="[A-Za-z0-9._\-]{3,32}" title="Use 3–32 letters, numbers, periods, underscores, or hyphens.">
-                <span class="field-help">This username is saved to your Nourish profile; it does not change your Puter username.</span>
-              </label>
-              <label class="account-field" for="account-email">Contact email
-                <input id="account-email" type="email" maxlength="254" autocomplete="email" placeholder="name@example.com">
-                <span class="field-help">Saved to your Nourish profile only; it does not change your Puter sign-in email.</span>
-              </label>
-              <label class="account-field" for="account-display-name">Nourish display name
-                <input id="account-display-name" type="text" maxlength="64" autocomplete="name" required>
-                <span class="field-help">This app-specific name appears in your sidebar and overview.</span>
-              </label>
-              <p id="account-profile-error" class="inline-error" role="alert" hidden></p>
-              <button id="save-account-profile" class="button button-primary" type="submit">Save profile</button>
-            </form>
-            </details>
-          </section>
 
-          <div class="account-settings-side">
-            <section class="panel account-panel">
-              <div class="panel-heading"><div><p class="eyebrow">Preferences</p><h2>App preferences</h2></div></div>
-              <div class="account-setting-row">
-                <div><strong>Daily calorie guide</strong><span>A flexible reference, not a rule.</span></div>
-                <div class="account-setting-value"><strong><span id="account-daily-target">2,000</span> kcal</strong><button class="text-button" type="button" data-edit-daily-target>Adjust</button></div>
-              </div>
-              <div class="preference-toggle-row">
-                <div><strong>Food scan notifications</strong><span>Show a browser notification on this device when a scan is saved. Enable it separately on each device.</span></div>
-                <label class="switch-control" for="account-notifications">
-                  <input id="account-notifications" type="checkbox">
-                  <span class="switch-track" aria-hidden="true"></span>
-                  <span class="visually-hidden">Food scan notifications</span>
-                </label>
-              </div>
-              <p id="account-preferences-status" class="field-help" role="status">Preferences are saved to your Puter account.</p>
-            </section>
+            <div class="account-settings-side">
+              <section class="panel account-panel">
+                <div class="panel-heading"><div><p class="eyebrow">Nutrition targets</p><h2>Daily macro goals</h2></div></div>
+                <form id="macro-goals-form" class="goal-settings-form">
+                  <label for="goal-protein">Protein (g)<input id="goal-protein" type="number" min="0" max="1000" step="1"></label>
+                  <label for="goal-carbs">Carbs (g)<input id="goal-carbs" type="number" min="0" max="2000" step="1"></label>
+                  <label for="goal-fat">Fat (g)<input id="goal-fat" type="number" min="0" max="1000" step="1"></label>
+                  <button class="button button-primary" type="submit">Save macro goals</button>
+                </form>
+                <p id="macro-goals-status" class="field-help" role="status"></p>
+              </section>
 
-            <section class="panel account-panel">
-              <div class="panel-heading"><div><p class="eyebrow">Nutrition targets</p><h2>Daily macro goals</h2></div></div>
-              <form id="macro-goals-form" class="goal-settings-form">
-                <label for="goal-protein">Protein (g)<input id="goal-protein" type="number" min="0" max="1000" step="1"></label>
-                <label for="goal-carbs">Carbs (g)<input id="goal-carbs" type="number" min="0" max="2000" step="1"></label>
-                <label for="goal-fat">Fat (g)<input id="goal-fat" type="number" min="0" max="1000" step="1"></label>
-                <button class="button button-primary" type="submit">Save macro goals</button>
-              </form>
-              <p id="macro-goals-status" class="field-help" role="status"></p>
-            </section>
+              <section class="panel account-panel">
+                <div class="panel-heading"><div><p class="eyebrow">Reminders</p><h2>Meal check-in</h2></div></div>
+                <form id="reminder-form" class="goal-settings-form">
+                  <label for="reminder-time">Daily reminder time
+                    <input id="reminder-time" type="time" value="20:00">
+                  </label>
+                  <label class="preference-toggle-row" for="reminder-enabled">
+                    <span><strong>Enable reminder</strong><span>Runs while Nourish is open. Enable notifications separately on each device; on iPhone or iPad, add Nourish to your Home Screen first.</span></span>
+                    <input id="reminder-enabled" type="checkbox">
+                  </label>
+                  <button class="button button-primary" type="submit">Save reminder</button>
+                  <button id="reminder-test-button" class="button button-outline" type="button">Send test notification</button>
+                </form>
+                <p id="reminder-status" class="field-help" role="status"></p>
+              </section>
 
-            <section class="panel account-panel">
-              <div class="panel-heading"><div><p class="eyebrow">Reminders</p><h2>Meal check-in</h2></div></div>
-              <form id="reminder-form" class="goal-settings-form">
-                <label for="reminder-time">Daily reminder time
-                  <input id="reminder-time" type="time" value="20:00">
-                </label>
-                <label class="preference-toggle-row" for="reminder-enabled">
-                  <span><strong>Enable reminder</strong><span>Runs while Nourish is open. Enable notifications separately on each device; on iPhone or iPad, add Nourish to your Home Screen first.</span></span>
-                  <input id="reminder-enabled" type="checkbox">
-                </label>
-                <button class="button button-primary" type="submit">Save reminder</button>
-                <button id="reminder-test-button" class="button button-outline" type="button">Send test notification</button>
-              </form>
-              <p id="reminder-status" class="field-help" role="status"></p>
-            </section>
+              <section class="panel account-panel account-privacy-panel">
+                <div><p class="eyebrow">Your data</p><h2>In your hands.</h2><p class="account-note">Your scans and preferences are stored in your Puter account. Manage your account directly with Puter.</p></div>
+                <a class="button button-outline button-small" href="https://puter.com" target="_blank" rel="noreferrer">Manage Puter account <span aria-hidden="true">↗</span></a>
+              </section>
 
-            <section class="panel account-panel account-privacy-panel">
-              <div><p class="eyebrow">Your data</p><h2>In your hands.</h2><p class="account-note">Your scans and preferences are stored in your Puter account. Manage your account directly with Puter.</p></div>
-              <a class="button button-outline button-small" href="https://puter.com" target="_blank" rel="noreferrer">Manage Puter account <span aria-hidden="true">↗</span></a>
-            </section>
-
-            <section class="panel account-panel account-logout-panel">
-              <div><p class="eyebrow">Session</p><h2>Sign out of Nourish</h2><p class="account-note">Your saved food scans and profile remain in your Puter account.</p></div>
-              <button id="account-sign-out-button" class="button button-outline" type="button">Log out</button>
-            </section>
+              <section class="panel account-panel account-logout-panel">
+                <div><p class="eyebrow">Session</p><h2>Sign out of Nourish</h2><p class="account-note">Your saved food scans and profile remain in your Puter account.</p></div>
+                <button id="account-sign-out-button" class="button button-outline" type="button">Log out</button>
+              </section>
+            </div>
           </div>
           <aside class="account-food-rail">
-            <img src="/food-bowl.webp" alt="A bowl of yogurt, berries, granola and fruit">
+            <img src="/food/01_avocado_toast.png" alt="Avocado toast topped with an egg and fresh herbs" loading="lazy" decoding="async">
             <div><p class="eyebrow">A note to keep</p><h2>Progress, not perfection.</h2><p>Make room for food that nourishes you—and food that simply brings joy.</p></div>
           </aside>
         </div>
@@ -554,6 +616,14 @@
         <div class="scan-layout">
           <section class="panel upload-panel">
             <div class="panel-heading"><div><p class="eyebrow">Step 1</p><h2>Your meal photo</h2></div></div>
+            <div class="mobile-camera-action">
+              <button id="camera-scan-button" class="button button-primary mobile-camera-button" type="button" aria-describedby="camera-scan-help">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2l1.4-2h6.2l1.4 2h2A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z"/><circle cx="12" cy="13" r="3.2"/></svg>
+                <span>Scan Food</span>
+              </button>
+              <input id="camera-image-input" type="file" accept="image/*" capture="environment" hidden>
+              <p id="camera-scan-help" class="mobile-camera-note">Opens your rear camera. If camera access is unavailable, choose a photo below.</p>
+            </div>
             <label id="drop-zone" class="drop-zone" for="image-input">
               <input id="image-input" type="file" accept="image/*" hidden>
               <div id="upload-placeholder" class="upload-placeholder">
@@ -587,6 +657,27 @@
             </div>
             <div id="result-content" hidden>
               <div class="food-result-heading"><div class="food-result-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 12h18c-1 6-4 9-9 9s-8-3-9-9Zm3-3a6 6 0 0 1 12 0"/></svg></div><div><h3 id="result-food-name"></h3><span id="result-serving"></span></div></div>
+              <form id="estimate-edit-form" class="estimate-edit-form">
+                <label for="estimate-food-name">Food name<input id="estimate-food-name" type="text" maxlength="120" required></label>
+                <div class="estimate-servings-row">
+                  <label for="estimate-servings">Servings
+                    <select id="estimate-servings">
+                      <option value="0.5">0.5 serving</option>
+                      <option value="1">1 serving</option>
+                      <option value="2">2 servings</option>
+                      <option value="custom">Custom</option>
+                    </select>
+                  </label>
+                  <label id="estimate-custom-serving-label" for="estimate-custom-servings" hidden>Custom servings<input id="estimate-custom-servings" type="number" min="0.1" max="100" step="0.1" value="1"></label>
+                </div>
+                <div class="edit-macros">
+                  <label>Calories (kcal)<input id="estimate-calories" type="number" min="0" step="1" required></label>
+                  <label>Protein (g)<input id="estimate-protein" type="number" min="0" step="0.1" required></label>
+                  <label>Carbohydrates (g)<input id="estimate-carbs" type="number" min="0" step="0.1" required></label>
+                  <label>Fat (g)<input id="estimate-fat" type="number" min="0" step="0.1" required></label>
+                </div>
+                <label for="estimate-description">Description<textarea id="estimate-description" maxlength="280" rows="2"></textarea></label>
+              </form>
               <div class="result-calories"><strong id="result-calories"></strong><span>kcal</span></div>
               <div class="macro-grid">
                 <div class="macro-item"><span class="macro-dot protein-dot"></span><span>Protein</span><strong id="result-protein"></strong><small>g</small></div>
@@ -594,13 +685,19 @@
                 <div class="macro-item"><span class="macro-dot fat-dot"></span><span>Fat</span><strong id="result-fat"></strong><small>g</small></div>
               </div>
               <p id="result-description" class="result-description"></p>
-              <label class="meal-type-label" for="scan-meal-type">Add to</label>
-              <select id="scan-meal-type" class="meal-type-select">
-                <option value="breakfast">Breakfast</option>
-                <option value="lunch">Lunch</option>
-                <option value="dinner">Dinner</option>
-                <option value="snacks">Snacks</option>
-              </select>
+              <div class="estimate-save-options">
+                <label class="meal-type-label" for="scan-meal-type">Add to
+                  <select id="scan-meal-type" class="meal-type-select">
+                    <option value="breakfast">Breakfast</option>
+                    <option value="lunch">Lunch</option>
+                    <option value="dinner">Dinner</option>
+                    <option value="snacks">Snacks</option>
+                  </select>
+                </label>
+                <label class="meal-type-label" for="scan-date">Meal date
+                  <input id="scan-date" type="date" required>
+                </label>
+              </div>
               <button id="save-scan-button" class="button button-primary save-button" type="button">Save to my history <span aria-hidden="true">→</span></button>
             </div>
           </section>
@@ -673,6 +770,8 @@
     <h2 id="barcode-entry-title" class="detail-title">Look up a barcode</h2>
     <form id="barcode-entry-form" class="edit-entry-form">
       <label for="barcode-input">Barcode</label><input id="barcode-input" type="text" inputmode="numeric" maxlength="32" required>
+      <label for="barcode-grams-eaten">Grams eaten</label><input id="barcode-grams-eaten" type="number" min="1" max="10000" step="1" value="100">
+      <p id="barcode-basis" class="field-help" role="status">Look up a product to see whether nutrition is per 100 g or per serving.</p>
       <p id="barcode-entry-status" class="field-help" role="status"></p>
       <p id="barcode-entry-error" class="name-error" role="alert" hidden></p>
       <div class="name-dialog-actions"><button class="button button-outline" type="button" data-close-dialog="barcode-entry-dialog">Cancel</button><button id="barcode-search-button" class="button button-primary" type="submit">Look up</button></div>
@@ -698,6 +797,9 @@
       <div class="name-dialog-actions"><button class="button button-outline" type="button" data-close-dialog="edit-entry-dialog">Cancel</button><button class="button button-primary" type="submit">Save changes</button></div>
     </form>
   </dialog>
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <div id="toast" class="toast" role="status" aria-live="polite">
+    <span id="toast-message"></span>
+    <button id="toast-undo" type="button" hidden>Undo</button>
+  </div>
 </body>
 </html>

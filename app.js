@@ -9,6 +9,8 @@ const PERSONAL_GOALS_KEY_PREFIX = "nutritrack:personal-goals:";
 const TRACKERS_KEY_PREFIX = "nutritrack:trackers:";
 const REMINDER_KEY_PREFIX = "nutritrack:reminder:";
 const FAVORITES_KEY_PREFIX = "nutritrack:favorites:";
+const THEME_STORAGE_KEY = "nourish:theme";
+const TEXT_SIZE_STORAGE_KEY = "nourish:text-size";
 const DEFAULT_MACRO_GOALS = { protein: 120, carbs: 250, fat: 67 };
 const MAX_IMAGE_BYTES = 12 * 1024 * 1024;
 const MAX_PROFILE_IMAGE_BYTES = 8 * 1024 * 1024;
@@ -16,10 +18,22 @@ const MAX_HISTORY_PAGE_SIZE = 1000;
 const MAX_NUTRITIONIST_HISTORY = 12;
 const MEAL_TYPES = ["breakfast", "lunch", "dinner", "snacks"];
 
+window.addEventListener("wheel", (event) => {
+  if (event.ctrlKey && event.cancelable) event.preventDefault();
+}, { passive: false });
+
+function preventBrowserPinchZoom(event) {
+  if (event.cancelable) event.preventDefault();
+}
+
+window.addEventListener("gesturestart", preventBrowserPinchZoom, { passive: false });
+window.addEventListener("gesturechange", preventBrowserPinchZoom, { passive: false });
+
 const dom = {
   authScreen: document.querySelector("#auth-screen"),
   authMessage: document.querySelector("#auth-message"),
   signInButton: document.querySelector("#sign-in-button"),
+  signInButtonLabel: document.querySelector(".auth-button-label"),
   appShell: document.querySelector("#app-shell"),
   signOutButton: document.querySelector("#sign-out-button"),
   mobileSignOutButton: document.querySelector("#mobile-sign-out-button"),
@@ -95,9 +109,15 @@ const dom = {
   saveAccountProfile: document.querySelector("#save-account-profile"),
   accountNotifications: document.querySelector("#account-notifications"),
   accountPreferencesStatus: document.querySelector("#account-preferences-status"),
+  accountDarkMode: document.querySelector("#account-dark-mode"),
+  accountThemeStatus: document.querySelector("#account-theme-status"),
+  accountTextSize: document.querySelector("#account-text-size"),
+  accountTextSizeStatus: document.querySelector("#account-text-size-status"),
   scanView: document.querySelector("#scan-view"),
   scanMealType: document.querySelector("#scan-meal-type"),
   imageInput: document.querySelector("#image-input"),
+  cameraScanButton: document.querySelector("#camera-scan-button"),
+  cameraImageInput: document.querySelector("#camera-image-input"),
   dropZone: document.querySelector("#drop-zone"),
   preview: document.querySelector("#image-preview"),
   uploadPlaceholder: document.querySelector("#upload-placeholder"),
@@ -110,7 +130,19 @@ const dom = {
   resultEmpty: document.querySelector("#result-empty"),
   resultContent: document.querySelector("#result-content"),
   saveScanButton: document.querySelector("#save-scan-button"),
+  estimateEditForm: document.querySelector("#estimate-edit-form"),
+  estimateFoodName: document.querySelector("#estimate-food-name"),
+  estimateDescription: document.querySelector("#estimate-description"),
+  estimateServings: document.querySelector("#estimate-servings"),
+  estimateCustomServingLabel: document.querySelector("#estimate-custom-serving-label"),
+  estimateCustomServings: document.querySelector("#estimate-custom-servings"),
+  estimateCalories: document.querySelector("#estimate-calories"),
+  estimateProtein: document.querySelector("#estimate-protein"),
+  estimateCarbs: document.querySelector("#estimate-carbs"),
+  estimateFat: document.querySelector("#estimate-fat"),
+  scanDate: document.querySelector("#scan-date"),
   recentScans: document.querySelector("#recent-scans"),
+  favoritesScans: document.querySelector("#favorites-scans"),
   historyList: document.querySelector("#history-list"),
   historyCount: document.querySelector("#history-count"),
   historyTotal: document.querySelector("#history-total"),
@@ -175,6 +207,8 @@ const dom = {
   barcodeEntryStatus: document.querySelector("#barcode-entry-status"),
   barcodeEntryError: document.querySelector("#barcode-entry-error"),
   barcodeSearchButton: document.querySelector("#barcode-search-button"),
+  barcodeGramsEaten: document.querySelector("#barcode-grams-eaten"),
+  barcodeBasis: document.querySelector("#barcode-basis"),
   dailyMeals: document.querySelector("#daily-meals"),
   dailyEntryCount: document.querySelector("#daily-entry-count"),
   dailyEmpty: document.querySelector("#daily-empty"),
@@ -189,6 +223,8 @@ const dom = {
   detailDialog: document.querySelector("#detail-dialog"),
   detailContent: document.querySelector("#detail-content"),
   toast: document.querySelector("#toast"),
+  toastMessage: document.querySelector("#toast-message"),
+  toastUndo: document.querySelector("#toast-undo"),
 };
 
 let currentUser = null;
@@ -199,7 +235,10 @@ let selectedFile = null;
 let previewUrl = null;
 let currentEstimate = null;
 let toastTimeout = null;
+let pendingDeleteUndoId = null;
+const pendingDeletes = new Map();
 let imageUrlCache = new Map();
+let thumbnailObserver = null;
 let busy = false;
 let namePromptResolver = null;
 let selectedHistoryDate = getLocalDateKey(new Date());
@@ -221,8 +260,20 @@ let lastReminderDate = "";
 let reminderNotificationPending = false;
 let notificationServiceWorkerRegistration = null;
 
+function isMobileDevice() {
+  const userAgent = navigator.userAgent || "";
+  const mobileUserAgent = /Android|iPhone|iPad|iPod|IEMobile|Windows Phone/i.test(userAgent);
+  const iPadOs = navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
+  return Boolean((navigator.userAgentData && navigator.userAgentData.mobile) || mobileUserAgent || iPadOs);
+}
+
 export async function initialize() {
+  document.documentElement.classList.toggle("mobile-camera-enabled", isMobileDevice());
+  applyTheme();
+  applyTextSize();
   bindEvents();
+  dom.scanDate.max = getLocalDateKey(new Date());
+  dom.scanDate.value = getLocalDateKey(new Date());
   await registerNotificationServiceWorker();
   dom.todayLabel.textContent = new Intl.DateTimeFormat(undefined, {
     weekday: "short",
@@ -251,6 +302,17 @@ export async function initialize() {
 
 function bindEvents() {
   dom.signInButton.addEventListener("click", signIn);
+  dom.estimateFoodName.addEventListener("input", updateEstimateFromInputs);
+  dom.estimateDescription.addEventListener("input", updateEstimateFromInputs);
+  dom.estimateCalories.addEventListener("input", updateEstimateBaseFromInputs);
+  dom.estimateProtein.addEventListener("input", updateEstimateBaseFromInputs);
+  dom.estimateCarbs.addEventListener("input", updateEstimateBaseFromInputs);
+  dom.estimateFat.addEventListener("input", updateEstimateBaseFromInputs);
+  dom.estimateServings.addEventListener("change", updateEstimateServings);
+  dom.estimateCustomServings.addEventListener("input", updateEstimateServings);
+  dom.toastUndo.addEventListener("click", undoDelete);
+  window.addEventListener("pagehide", finalizePendingDeletesOnClose);
+  window.addEventListener("beforeunload", finalizePendingDeletesOnClose);
   dom.signOutButton.addEventListener("click", signOut);
   dom.mobileSignOutButton.addEventListener("click", signOut);
   dom.accountSignOutButton.addEventListener("click", signOut);
@@ -270,6 +332,8 @@ function bindEvents() {
   dom.uploadProfilePicture.addEventListener("click", uploadProfilePicture);
   dom.removeProfilePicture.addEventListener("click", removeProfilePicture);
   dom.accountNotifications.addEventListener("change", saveNotificationPreference);
+  dom.accountDarkMode.addEventListener("change", saveThemePreference);
+  dom.accountTextSize.addEventListener("change", saveTextSizePreference);
   dom.macroGoalsForm.addEventListener("submit", saveMacroGoals);
   dom.reminderForm.addEventListener("submit", saveReminderSettings);
   dom.reminderTestButton.addEventListener("click", sendTestReminder);
@@ -374,18 +438,38 @@ function bindEvents() {
   });
   window.addEventListener("popstate", () => navigate(viewFromPath(), false));
   document.querySelectorAll("[data-open-scan]").forEach((button) => {
-    button.addEventListener("click", openScan);
+    button.addEventListener("click", () => {
+      if (button.hasAttribute("data-camera-on-mobile") && isMobileDevice()) {
+        openCameraCapture();
+      } else {
+        openScan();
+      }
+    });
   });
   document.querySelector("#cancel-scan").addEventListener("click", () => navigate("dashboard"));
   dom.imageInput.addEventListener("change", (event) => {
     if (event.target.files && event.target.files[0]) selectImage(event.target.files[0]);
+  });
+  dom.cameraScanButton.addEventListener("click", openCameraCapture);
+  dom.cameraImageInput.addEventListener("change", async (event) => {
+    const file = event.target.files && event.target.files[0];
+    event.target.value = "";
+    if (!file) return;
+    if (dom.scanView.hidden) openScan();
+    if (!selectImage(file)) return;
+    await analyzeImage();
   });
   dom.replaceImage.addEventListener("click", () => dom.imageInput.click());
   dom.removeImage.addEventListener("click", clearSelectedImage);
   dom.analyzeButton.addEventListener("click", analyzeImage);
   dom.saveScanButton.addEventListener("click", saveScan);
   document.querySelector("#open-manual-entry").addEventListener("click", openManualEntry);
-  document.querySelector("#open-barcode-entry").addEventListener("click", () => dom.barcodeEntryDialog.showModal());
+  document.querySelector("#open-barcode-entry").addEventListener("click", () => {
+    dom.barcodeGramsEaten.value = "100";
+    dom.barcodeBasis.textContent = "Look up a product to see whether nutrition is per 100 g or per serving.";
+    dom.barcodeEntryError.hidden = true;
+    dom.barcodeEntryDialog.showModal();
+  });
   dom.manualEntryForm.addEventListener("submit", useManualEntry);
   dom.barcodeEntryForm.addEventListener("submit", lookupBarcode);
   dom.exportWeekButton.addEventListener("click", exportWeeklyCsv);
@@ -401,6 +485,25 @@ function bindEvents() {
     if (favoriteButton) toggleFavorite(favoriteButton.dataset.favoriteId);
     const repeatButton = event.target.closest("[data-repeat-id]");
     if (repeatButton) repeatFavorite(repeatButton.dataset.repeatId);
+  });
+  dom.favoritesScans.addEventListener("click", (event) => {
+    const addButton = event.target.closest("[data-add-again-id]");
+    if (addButton) {
+      repeatFavorite(addButton.dataset.addAgainId);
+      return;
+    }
+    const row = event.target.closest("[data-record-id]");
+    if (row) showDetails(row.dataset.recordId);
+  });
+  dom.recentScans.addEventListener("click", (event) => {
+    const addButton = event.target.closest("[data-add-again-id]");
+    if (addButton) {
+      event.stopPropagation();
+      repeatFavorite(addButton.dataset.addAgainId);
+      return;
+    }
+    const row = event.target.closest("[data-record-id]");
+    if (row) showDetails(row.dataset.recordId);
   });
 
   dom.dropZone.addEventListener("dragover", (event) => {
@@ -421,7 +524,7 @@ function bindEvents() {
     const row = event.target.closest("[data-record-id]");
     if (row) showDetails(row.dataset.recordId);
   });
-  [dom.recentScans, dom.historyList].forEach((list) => {
+  [dom.recentScans, dom.favoritesScans, dom.historyList].forEach((list) => {
     list.addEventListener("keydown", (event) => {
       const row = event.target.closest("[data-record-id]");
       if (row && event.target === row && (event.key === "Enter" || event.key === " ")) {
@@ -452,8 +555,12 @@ function bindEvents() {
 
 async function signIn() {
   dom.signInButton.disabled = true;
-  setAuthMessage("Opening secure Puter sign-in…");
   try {
+    if (currentUser && puter.auth.isSignedIn()) {
+      await enterApp();
+      return;
+    }
+    setAuthMessage("Opening secure Puter sign-in…");
     await puter.auth.signIn();
     await enterApp();
   } catch (error) {
@@ -498,10 +605,15 @@ async function signOut() {
 }
 
 async function enterApp() {
+  dom.appShell.hidden = true;
+  dom.authScreen.hidden = false;
+  setAuthMessage("Checking your Puter session…");
   currentUser = await puter.auth.getUser();
+  console.info("Puter scan-history account and app origin.", {
+    accountUuid: currentUser && typeof currentUser.uuid === "string" ? currentUser.uuid : null,
+    appOrigin: window.location.origin,
+  });
   const displayName = await resolveDisplayName(currentUser);
-  dom.authScreen.hidden = true;
-  dom.appShell.hidden = false;
   dom.userName.textContent = displayName || "Name not set";
   dom.userAvatarInitial.textContent = displayName ? displayName.charAt(0) : "N";
   dom.welcomeName.textContent = displayName ? displayName.split(/\s+/)[0] : "there";
@@ -509,7 +621,25 @@ async function enterApp() {
   applyTheme();
   await loadProfilePicture();
   await refreshNotificationPreference();
-  await loadRecords();
+  setAuthMessage("Loading your saved scans…");
+  try {
+    await loadRecords();
+  } catch (error) {
+    console.error("Keeping scan-dependent app views hidden until history can be loaded.", {
+      ...getScanStorageDiagnosticContext(),
+      error: errorMessage(error, "Puter KV request failed"),
+    });
+    dom.signInButtonLabel.textContent = "Retry loading history";
+    setAuthMessage(
+      "We couldn't load your saved scans from Puter. This did not delete them. Check your connection, Puter account, and app address, then retry.",
+      true,
+    );
+    return;
+  }
+  dom.signInButtonLabel.textContent = "Log in with Puter";
+  setAuthMessage("");
+  dom.authScreen.hidden = true;
+  dom.appShell.hidden = false;
   await loadDailyTarget();
   await loadPersonalGoals();
   await loadFavorites();
@@ -597,6 +727,7 @@ async function toggleFavorite(id) {
     await puter.kv.set(getAccountScopedKey(FAVORITES_KEY_PREFIX), favorites);
     showToast(exists ? "Removed from favorites." : "Saved to favorites.");
     if (dom.detailDialog.open) showDetails(id);
+    renderFavorites();
   } catch (error) {
     favorites = exists ? [id, ...favorites] : favorites.filter((item) => item !== id);
     showToast(`Could not update favorites: ${errorMessage(error, "KV request failed")}`, true);
@@ -618,6 +749,7 @@ async function repeatFavorite(id) {
     carbs: record.carbs,
     fat: record.fat,
     description: record.description || "",
+    ...(Object.prototype.hasOwnProperty.call(record, "servings") ? { servings: record.servings } : {}),
   };
   try {
     await puter.kv.set(getRecordKey(repeated), repeated);
@@ -796,7 +928,7 @@ async function registerNotificationServiceWorker() {
 }
 
 async function showDeviceNotification(title, body) {
-  const options = { body, icon: "/calories-logo.png" };
+  const options = { body, icon: "/calorise-logo-192.png" };
   const registration = notificationServiceWorkerRegistration;
   if (registration && typeof registration.showNotification === "function") {
     await registration.showNotification(title, options);
@@ -1197,10 +1329,64 @@ async function saveAccountProfileForm(event) {
   }
 }
 
-function applyTheme() {
-  document.documentElement.dataset.theme = "light";
-  document.documentElement.style.colorScheme = "light";
-  document.querySelector('meta[name="theme-color"]').content = "#f7f5ed";
+function getSavedTheme() {
+  try {
+    return window.localStorage.getItem(THEME_STORAGE_KEY) === "light" ? "light" : "dark";
+  } catch (error) {
+    console.warn("Could not read the saved theme preference.", error);
+    return "dark";
+  }
+}
+
+function applyTheme(theme = getSavedTheme()) {
+  const activeTheme = theme === "light" ? "light" : "dark";
+  document.documentElement.dataset.theme = activeTheme;
+  document.documentElement.style.colorScheme = activeTheme;
+  document.querySelector('meta[name="theme-color"]').content = activeTheme === "dark" ? "#101b17" : "#f7f5ed";
+  dom.accountDarkMode.checked = activeTheme === "dark";
+  dom.accountThemeStatus.textContent = `${activeTheme === "dark" ? "Dark" : "Light"} mode is on. Saved on this device.`;
+}
+
+function getSavedTextSize() {
+  try {
+    const saved = window.localStorage.getItem(TEXT_SIZE_STORAGE_KEY);
+    return ["normal", "large", "extra-large"].includes(saved) ? saved : "normal";
+  } catch (error) {
+    console.warn("Could not read the saved text size preference.", error);
+    return "normal";
+  }
+}
+
+function applyTextSize(textSize = getSavedTextSize()) {
+  const activeSize = ["normal", "large", "extra-large"].includes(textSize) ? textSize : "normal";
+  document.documentElement.dataset.textSize = activeSize;
+  dom.accountTextSize.value = activeSize;
+  const label = activeSize === "extra-large" ? "Extra Large" : activeSize === "large" ? "Large" : "Normal";
+  dom.accountTextSizeStatus.textContent = `${label} text size is on. Saved on this device.`;
+}
+
+function saveTextSizePreference() {
+  const textSize = dom.accountTextSize.value;
+  applyTextSize(textSize);
+  try {
+    window.localStorage.setItem(TEXT_SIZE_STORAGE_KEY, textSize);
+  } catch (error) {
+    dom.accountTextSizeStatus.textContent = `Text size is on, but the preference could not be saved on this device: ${errorMessage(error, "browser storage is unavailable")}`;
+    console.warn("Could not save the text size preference.", error);
+  }
+}
+
+function saveThemePreference() {
+  const activeTheme = dom.accountDarkMode.checked ? "dark" : "light";
+  applyTheme(activeTheme);
+  try {
+    window.localStorage.setItem(THEME_STORAGE_KEY, activeTheme);
+  } catch (error) {
+    const message = `${activeTheme === "dark" ? "Dark" : "Light"} mode is on, but the preference could not be saved on this device: ${errorMessage(error, "browser storage is unavailable")}`;
+    dom.accountThemeStatus.textContent = message;
+    console.warn("Could not save the theme preference.", error);
+    showToast(message, true);
+  }
 }
 
 async function refreshNotificationPreference() {
@@ -1336,23 +1522,74 @@ function getEmailDisplayName(email) {
 async function loadRecords() {
   const loaded = [];
   let cursor;
-  do {
-    const options = {
-      pattern: SCAN_PREFIX,
-      returnValues: true,
-      reverse: true,
-      limit: MAX_HISTORY_PAGE_SIZE,
-    };
-    if (cursor) options.cursor = cursor;
-    const page = await puter.kv.list(options);
-    for (const item of page.items) {
-      if (item.value && typeof item.value === "object" && item.value.id) {
-        loaded.push(item.value);
+  let pageCount = 0;
+  let entryCount = 0;
+  let skippedNoIdCount = 0;
+  let invalidDateCount = 0;
+  console.info("Loading scan history from Puter KV.", getScanStorageDiagnosticContext());
+  try {
+    do {
+      const options = {
+        pattern: SCAN_PREFIX,
+        returnValues: true,
+        reverse: true,
+        limit: MAX_HISTORY_PAGE_SIZE,
+      };
+      if (cursor) options.cursor = cursor;
+      const page = await puter.kv.list(options);
+      if (!page || !Array.isArray(page.items)) {
+        throw new Error("Puter KV returned an invalid scan-history page.");
       }
-    }
-    cursor = page.cursor;
-  } while (cursor);
-  records = loaded.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      pageCount += 1;
+      entryCount += page.items.length;
+      for (const item of page.items) {
+        const value = item && item.value;
+        if (!value || typeof value !== "object" || !value.id) {
+          skippedNoIdCount += 1;
+          continue;
+        }
+        if (typeof value.createdAt !== "string" || Number.isNaN(Date.parse(value.createdAt))) invalidDateCount += 1;
+        loaded.push(value);
+      }
+      cursor = page.cursor;
+    } while (cursor);
+  } catch (error) {
+    console.error("Could not retrieve scan history from Puter KV.", {
+      ...getScanStorageDiagnosticContext(),
+      pagesFetched: pageCount,
+      entriesRead: entryCount,
+      validRecords: loaded.length,
+      error: errorMessage(error, "Puter KV request failed"),
+    });
+    throw error;
+  }
+  try {
+    records = loaded.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  } catch (error) {
+    console.error("Could not sort retrieved scan-history records.", {
+      ...getScanStorageDiagnosticContext(),
+      pagesFetched: pageCount,
+      entriesRead: entryCount,
+      validRecords: loaded.length,
+      error: errorMessage(error, "Invalid scan date metadata"),
+    });
+    throw error;
+  }
+  console.info("Loaded scan history from Puter KV.", {
+    ...getScanStorageDiagnosticContext(),
+    pagesFetched: pageCount,
+    entriesRead: entryCount,
+    validRecords: records.length,
+    skippedNoId: skippedNoIdCount,
+    invalidDateRecords: invalidDateCount,
+  });
+  if (skippedNoIdCount || invalidDateCount) {
+    console.warn("Some scan-history KV entries have incomplete or invalid metadata.", {
+      ...getScanStorageDiagnosticContext(),
+      skippedNoId: skippedNoIdCount,
+      invalidDateRecords: invalidDateCount,
+    });
+  }
 }
 
 function viewFromPath() {
@@ -1416,18 +1653,27 @@ function openScan() {
   dom.scanView.hidden = false;
   dom.pageTitle.textContent = "New scan";
   dom.scanMealType.value = inferMealTypeForHour(new Date().getHours());
+  dom.scanDate.max = getLocalDateKey(new Date());
+  dom.scanDate.value = getLocalDateKey(new Date());
   document.querySelectorAll(".nav-link").forEach((button) => button.classList.remove("active"));
+}
+
+function openCameraCapture() {
+  clearScanError();
+  if (dom.scanView.hidden) openScan();
+  dom.cameraImageInput.value = "";
+  dom.cameraImageInput.click();
 }
 
 function selectImage(file) {
   clearScanError();
   if (!file.type.startsWith("image/")) {
     showScanError("Choose an image file to scan.");
-    return;
+    return false;
   }
   if (file.size > MAX_IMAGE_BYTES) {
     showScanError("This image is over 12 MB. Choose a smaller photo.");
-    return;
+    return false;
   }
   releasePreviewUrl();
   selectedFile = file;
@@ -1442,6 +1688,7 @@ function selectImage(file) {
   dom.resultContent.hidden = true;
   dom.resultEmpty.hidden = false;
   dom.imageInput.value = "";
+  return true;
 }
 
 function clearSelectedImage() {
@@ -1456,6 +1703,7 @@ function clearSelectedImage() {
   dom.resultContent.hidden = true;
   dom.resultEmpty.hidden = false;
   dom.imageInput.value = "";
+  dom.cameraImageInput.value = "";
   clearScanError();
 }
 
@@ -1470,12 +1718,14 @@ async function analyzeImage() {
   dom.resultContent.hidden = true;
   dom.resultEmpty.hidden = false;
   setBusy(true, dom.analyzeButton, "Analyzing your meal…");
+  setBusy(true, dom.cameraScanButton, "Analyzing your meal…");
   clearScanError();
   try {
     const prompt = [
       "Identify the visible food in this photo and estimate the nutrition for the portion shown.",
       "Reply with only one valid JSON object, no markdown, using exactly these fields:",
       '{"foodName":"short dish name","servingSize":"estimated portion","calories":0,"protein":0,"carbs":0,"fat":0,"description":"brief note about the estimate"}',
+      'If no food is visible, set "foodName" to "NO_FOOD_DETECTED", set nutrition values to 0, and explain briefly in "description". Do not estimate nutrition for non-food images.',
       "Use non-negative numbers for calories (kcal) and macronutrients (grams). If multiple foods are present, estimate the whole visible meal. Be conservative and state uncertainty briefly in description. Do not claim exact measurement.",
     ].join(" ");
     const response = await puter.ai.chat(prompt, selectedFile, false, { temperature: 0.2 });
@@ -1487,6 +1737,7 @@ async function analyzeImage() {
     showScanError(errorMessage(error, "The image could not be analyzed. Try again."));
   } finally {
     setBusy(false, dom.analyzeButton, "Analyze with AI");
+    setBusy(false, dom.cameraScanButton, "Scan Food");
     dom.analyzeButton.disabled = !selectedFile;
   }
 }
@@ -1539,13 +1790,21 @@ function parseNutrition(content) {
   if (typeof parsed.foodName !== "string" || !parsed.foodName.trim()) {
     throw new Error("The AI did not identify a food name. Please try another photo.");
   }
+  const foodName = parsed.foodName.trim();
+  const normalizedFoodName = foodName.toLowerCase().replace(/[_-]+/g, " ");
+  if (
+    /\b(?:no|not|unable to identify|cannot identify|can't identify)\b.{0,30}\b(?:food|meal|dish|edible)\b/i.test(normalizedFoodName) ||
+    /^(?:none|n\/?a|unknown)$/.test(normalizedFoodName)
+  ) {
+    throw new Error("We couldn't find any food in this photo. Please upload a clear photo of a meal or food item and try again.");
+  }
   for (const field of fields) {
     if (typeof parsed[field] !== "number" || !Number.isFinite(parsed[field]) || parsed[field] < 0) {
       throw new Error(`The AI returned an invalid ${field} estimate. Please try again.`);
     }
   }
   return {
-    foodName: parsed.foodName.trim().slice(0, 120),
+    foodName: foodName.slice(0, 120),
     servingSize: typeof parsed.servingSize === "string" ? parsed.servingSize.trim().slice(0, 120) : "Portion shown",
     calories: Math.round(parsed.calories),
     protein: roundToOne(parsed.protein),
@@ -1595,6 +1854,12 @@ async function lookupBarcode(event) {
   event.preventDefault();
   const barcode = document.querySelector("#barcode-input").value.trim();
   if (!barcode) return;
+  const gramsEaten = dom.barcodeGramsEaten.valueAsNumber;
+  if (!Number.isFinite(gramsEaten) || gramsEaten <= 0) {
+    dom.barcodeEntryError.textContent = "Enter grams eaten greater than 0.";
+    dom.barcodeEntryError.hidden = false;
+    return;
+  }
   dom.barcodeEntryStatus.textContent = "Looking up product…";
   dom.barcodeEntryError.hidden = true;
   dom.barcodeSearchButton.disabled = true;
@@ -1605,15 +1870,54 @@ async function lookupBarcode(event) {
     if (!data.product) throw new Error("No product was found for that barcode.");
     const product = data.product;
     const nutriments = product.nutriments || {};
+    const hasPer100g = Number.isFinite(Number(nutriments["energy-kcal_100g"]))
+      || Number.isFinite(Number(nutriments.proteins_100g))
+      || Number.isFinite(Number(nutriments.carbohydrates_100g))
+      || Number.isFinite(Number(nutriments.fat_100g));
+    const hasPerServing = Number.isFinite(Number(nutriments["energy-kcal_serving"]))
+      || Number.isFinite(Number(nutriments.proteins_serving))
+      || Number.isFinite(Number(nutriments.carbohydrates_serving))
+      || Number.isFinite(Number(nutriments.fat_serving));
+    const hasPlainNutrition = Number.isFinite(Number(nutriments["energy-kcal"]))
+      || Number.isFinite(Number(nutriments.proteins))
+      || Number.isFinite(Number(nutriments.carbohydrates))
+      || Number.isFinite(Number(nutriments.fat));
+    const basis = hasPer100g || (!hasPerServing && hasPlainNutrition)
+      ? "100g"
+      : hasPerServing
+        ? "serving"
+        : "unknown";
+    const factor = basis === "100g" ? gramsEaten / 100 : 1;
+    const caloriesPerBasis = basis === "100g"
+      ? Number(nutriments["energy-kcal_100g"] || nutriments["energy-kcal"] || 0)
+      : Number(nutriments["energy-kcal_serving"] || nutriments["energy-kcal"] || 0);
+    const proteinPerBasis = basis === "100g"
+      ? Number(nutriments.proteins_100g || nutriments.proteins || 0)
+      : Number(nutriments.proteins_serving || nutriments.proteins || 0);
+    const carbsPerBasis = basis === "100g"
+      ? Number(nutriments.carbohydrates_100g || nutriments.carbohydrates || 0)
+      : Number(nutriments.carbohydrates_serving || nutriments.carbohydrates || 0);
+    const fatPerBasis = basis === "100g"
+      ? Number(nutriments.fat_100g || nutriments.fat || 0)
+      : Number(nutriments.fat_serving || nutriments.fat || 0);
     const estimate = {
       foodName: (product.product_name || product.generic_name || "Barcode product").trim().slice(0, 120),
-      servingSize: product.serving_size || "One serving",
-      calories: Math.round(Number(nutriments["energy-kcal_100g"] || nutriments["energy-kcal"] || 0)),
-      protein: roundToOne(Number(nutriments.proteins_100g || nutriments.proteins || 0)),
-      carbs: roundToOne(Number(nutriments.carbohydrates_100g || nutriments.carbohydrates || 0)),
-      fat: roundToOne(Number(nutriments.fat_100g || nutriments.fat || 0)),
+      servingSize: basis === "100g"
+        ? `${formatNumber(gramsEaten)} g · per-100g nutrition`
+        : basis === "serving"
+          ? `${product.serving_size || "One serving"} · per-serving nutrition`
+          : "Serving basis not specified",
+      calories: Math.round(caloriesPerBasis * factor),
+      protein: roundToOne(proteinPerBasis * factor),
+      carbs: roundToOne(carbsPerBasis * factor),
+      fat: roundToOne(fatPerBasis * factor),
       description: "Nutrition loaded from Open Food Facts and may vary by package or region.",
     };
+    dom.barcodeBasis.textContent = basis === "100g"
+      ? `Basis: per 100 g — ${formatNumber(gramsEaten)} g × value ÷ 100`
+      : basis === "serving"
+        ? "Basis: per serving — grams eaten is not applied"
+        : "Basis: unknown — review the product nutrition before saving";
     currentEstimate = estimate;
     dom.scanMealType.value = inferMealTypeForHour(new Date().getHours());
     displayEstimate(estimate);
@@ -1631,6 +1935,25 @@ async function lookupBarcode(event) {
 function displayEstimate(estimate) {
   dom.resultEmpty.hidden = true;
   dom.resultContent.hidden = false;
+  if (!estimate._baseNutrition) {
+    estimate._baseNutrition = {
+      calories: estimate.calories,
+      protein: estimate.protein,
+      carbs: estimate.carbs,
+      fat: estimate.fat,
+    };
+  }
+  estimate._originalServingSize = estimate.servingSize || "Portion shown";
+  estimate._servings = 1;
+  dom.estimateFoodName.value = estimate.foodName;
+  dom.estimateDescription.value = estimate.description || "";
+  dom.estimateServings.value = "1";
+  dom.estimateCustomServingLabel.hidden = true;
+  dom.estimateCustomServings.value = "1";
+  dom.estimateCalories.value = String(estimate.calories);
+  dom.estimateProtein.value = String(estimate.protein);
+  dom.estimateCarbs.value = String(estimate.carbs);
+  dom.estimateFat.value = String(estimate.fat);
   document.querySelector("#result-food-name").textContent = estimate.foodName;
   document.querySelector("#result-serving").textContent = estimate.servingSize;
   document.querySelector("#result-calories").textContent = formatNumber(estimate.calories);
@@ -1640,29 +1963,142 @@ function displayEstimate(estimate) {
   document.querySelector("#result-description").textContent = estimate.description || "A visual estimate. Actual nutrition may vary with ingredients and portion size.";
 }
 
+function getEstimateServingFactor() {
+  if (!currentEstimate) return 1;
+  if (dom.estimateServings.value === "custom") {
+    const custom = dom.estimateCustomServings.valueAsNumber;
+    return Number.isFinite(custom) && custom > 0 ? custom : 1;
+  }
+  const selected = Number(dom.estimateServings.value);
+  return Number.isFinite(selected) && selected > 0 ? selected : 1;
+}
+
+function updateEstimateFromInputs() {
+  if (!currentEstimate) return;
+  currentEstimate.foodName = dom.estimateFoodName.value.trim().slice(0, 120);
+  currentEstimate.description = dom.estimateDescription.value.trim().slice(0, 280);
+  document.querySelector("#result-food-name").textContent = currentEstimate.foodName;
+  document.querySelector("#result-description").textContent = currentEstimate.description || "A visual estimate. Actual nutrition may vary with ingredients and portion size.";
+}
+
+function updateEstimateBaseFromInputs() {
+  if (!currentEstimate) return;
+  const factor = getEstimateServingFactor();
+  const calories = dom.estimateCalories.valueAsNumber;
+  const protein = dom.estimateProtein.valueAsNumber;
+  const carbs = dom.estimateCarbs.valueAsNumber;
+  const fat = dom.estimateFat.valueAsNumber;
+  if ([calories, protein, carbs, fat].some((value) => !Number.isFinite(value) || value < 0)) return;
+  currentEstimate._baseNutrition = {
+    calories: calories / factor,
+    protein: protein / factor,
+    carbs: carbs / factor,
+    fat: fat / factor,
+  };
+  applyEstimateServingFactor();
+}
+
+function updateEstimateServings() {
+  if (!currentEstimate) return;
+  const isCustom = dom.estimateServings.value === "custom";
+  dom.estimateCustomServingLabel.hidden = !isCustom;
+  if (isCustom) dom.estimateCustomServings.focus();
+  applyEstimateServingFactor();
+}
+
+function applyEstimateServingFactor() {
+  if (!currentEstimate) return;
+  const factor = getEstimateServingFactor();
+  const base = currentEstimate._baseNutrition;
+  if (!base) return;
+  currentEstimate.calories = Math.round(base.calories * factor);
+  currentEstimate.protein = roundToOne(base.protein * factor);
+  currentEstimate.carbs = roundToOne(base.carbs * factor);
+  currentEstimate.fat = roundToOne(base.fat * factor);
+  currentEstimate._servings = factor;
+  dom.estimateCalories.value = String(currentEstimate.calories);
+  dom.estimateProtein.value = String(currentEstimate.protein);
+  dom.estimateCarbs.value = String(currentEstimate.carbs);
+  dom.estimateFat.value = String(currentEstimate.fat);
+  document.querySelector("#result-calories").textContent = formatNumber(currentEstimate.calories);
+  document.querySelector("#result-protein").textContent = formatNumber(currentEstimate.protein);
+  document.querySelector("#result-carbs").textContent = formatNumber(currentEstimate.carbs);
+  document.querySelector("#result-fat").textContent = formatNumber(currentEstimate.fat);
+  const originalServing = currentEstimate._originalServingSize || currentEstimate.servingSize || "Portion shown";
+  document.querySelector("#result-serving").textContent = factor === 1
+    ? originalServing
+    : `${originalServing} · ${formatNumber(factor)} servings`;
+}
+
 async function saveScan() {
   if (!currentEstimate || busy) return;
+  updateEstimateFromInputs();
+  const calories = dom.estimateCalories.valueAsNumber;
+  const protein = dom.estimateProtein.valueAsNumber;
+  const carbs = dom.estimateCarbs.valueAsNumber;
+  const fat = dom.estimateFat.valueAsNumber;
+  if (!dom.estimateFoodName.value.trim() || [calories, protein, carbs, fat].some((value) => !Number.isFinite(value) || value < 0)) {
+    showScanError("Enter a food name and valid non-negative nutrition values.");
+    return;
+  }
+  const selectedDate = dom.scanDate.value;
+  const today = getLocalDateKey(new Date());
+  if (!selectedDate || selectedDate > today) {
+    showScanError("Choose today or an earlier date. Future dates are not allowed.");
+    return;
+  }
+  applyEstimateServingFactor();
+  currentEstimate.calories = Math.round(calories);
+  currentEstimate.protein = roundToOne(protein);
+  currentEstimate.carbs = roundToOne(carbs);
+  currentEstimate.fat = roundToOne(fat);
   setBusy(true, dom.saveScanButton, "Saving scan…");
   clearScanError();
-  let uploadedPath = null;
+  let savedToHistory = false;
+  let recordId = "";
+  let imagePath = null;
+  let phase = "prepare";
   try {
+    const now = new Date();
+    const selected = parseLocalDateKey(selectedDate);
+    selected.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds());
+    const createdAt = selected.toISOString();
+    recordId = createId();
     if (selectedFile) {
-      const uploaded = await puter.fs.upload([selectedFile], "nutritrack/scans", {
+      phase = "write-image";
+      const extension = selectedFile.name.match(/\.[a-z0-9]{1,10}$/i)?.[0].toLowerCase() || "";
+      const written = await puter.fs.write(`nutritrack/scans/${recordId}${extension}`, selectedFile, {
         createMissingParents: true,
         dedupeName: true,
       });
-      uploadedPath = uploaded.path;
+      if (typeof written?.path !== "string" || !written.path) {
+        throw new Error("Puter did not return the saved image path.");
+      }
+      imagePath = written.path;
     }
-    const createdAt = new Date().toISOString();
-    const id = createId();
     const record = {
-      id,
+      id: recordId,
       createdAt,
-      imagePath: uploadedPath,
+      imagePath,
       mealType: dom.scanMealType.value,
-      ...currentEstimate,
+      foodName: currentEstimate.foodName,
+      servingSize: currentEstimate.servingSize,
+      calories: currentEstimate.calories,
+      protein: currentEstimate.protein,
+      carbs: currentEstimate.carbs,
+      fat: currentEstimate.fat,
+      description: currentEstimate.description,
+      servings: getEstimateServingFactor(),
     };
+    phase = "write-record";
     await puter.kv.set(getRecordKey(record), record);
+    savedToHistory = true;
+    phase = "update-ui";
+    console.info("Saved scan record to Puter KV.", {
+      ...getScanStorageDiagnosticContext(),
+      recordId,
+      imagePath,
+    });
     records.unshift(record);
     records.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     clearSelectedImage();
@@ -1679,15 +2115,20 @@ async function saveScan() {
     }
     showToast("Your scan was saved to your history.");
   } catch (error) {
-    let message = errorMessage(error, "Could not save your scan.");
-    if (uploadedPath) {
-      try {
-        await puter.fs.delete(uploadedPath);
-      } catch (cleanupError) {
-        message += ` The uploaded image could not be cleaned up: ${errorMessage(cleanupError, "storage cleanup failed")}`;
-      }
+    const message = errorMessage(error, "Could not save your scan.");
+    console.error("Could not complete scan save.", {
+      ...getScanStorageDiagnosticContext(),
+      recordId: recordId || null,
+      phase,
+      metadataWriteAcknowledged: savedToHistory,
+      imagePath,
+      error: message,
+    });
+    if (savedToHistory) {
+      showToast(`Your scan was saved, but the screen could not finish updating: ${message}`, true);
+    } else {
+      showScanError(message);
     }
-    showScanError(message);
   } finally {
     setBusy(false, dom.saveScanButton, "Save to my history");
   }
@@ -1744,6 +2185,7 @@ function renderDashboard() {
   dom.historyCount.textContent = formatNumber(records.length);
   renderActivityChart();
   renderRecent();
+  renderFavorites();
   renderWeeklyInsights();
   renderTrackers();
   renderNutritionistSummary();
@@ -1946,26 +2388,56 @@ function trimNutritionistConversation() {
 }
 
 function renderActivityChart() {
-  const days = [];
   const now = new Date();
-  for (let offset = 6; offset >= 0; offset -= 1) {
-    const day = new Date(now.getFullYear(), now.getMonth(), now.getDate() - offset);
-    const count = records.filter((record) => {
-      const date = new Date(record.createdAt);
-      return date.getFullYear() === day.getFullYear() && date.getMonth() === day.getMonth() && date.getDate() === day.getDate();
-    }).length;
-    days.push({ day, count });
+  const monday = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() - ((now.getDay() + 6) % 7),
+  );
+  const todayKey = getLocalDateKey(now);
+  const caloriesByDate = new Map();
+  const seenRecordIds = new Set();
+  for (const record of records) {
+    if (!record || !record.id || seenRecordIds.has(record.id)) continue;
+    const dateKey = getLocalDateKey(new Date(record.createdAt));
+    const calories = Number(record.calories);
+    if (!dateKey || !Number.isFinite(calories) || calories < 0) continue;
+    seenRecordIds.add(record.id);
+    caloriesByDate.set(dateKey, (caloriesByDate.get(dateKey) || 0) + calories);
   }
-  const max = Math.max(1, ...days.map(({ count }) => count));
-  dom.activityChart.innerHTML = days.map(({ day, count }) => {
-    const height = count === 0 ? 3 : Math.max(9, Math.round((count / max) * 100));
-    const dayName = new Intl.DateTimeFormat(undefined, { weekday: "short" }).format(day);
-    const dateKey = getLocalDateKey(day);
+
+  const maxDayCalories = Math.max(0, ...caloriesByDate.values());
+  const scaleMax = Math.max(3000, Math.ceil(Math.max(dailyCalorieTarget, maxDayCalories) / 500) * 500);
+  const quarter = scaleMax / 4;
+  const guidePosition = 100 - (dailyCalorieTarget / scaleMax) * 100;
+  const guideLabel = document.querySelector("#activity-guide-label");
+  if (guideLabel) guideLabel.textContent = `Daily guide — ${formatNumber(dailyCalorieTarget)} kcal`;
+  const guideLine = dom.activityChart.closest(".activity-chart-layout")?.querySelector(".activity-guide-line");
+  if (guideLine) guideLine.style.top = `${Math.max(0, Math.min(100, guidePosition))}%`;
+  const yLabels = [
+    ["#activity-y-max", scaleMax],
+    ["#activity-y-upper", quarter * 3],
+    ["#activity-y-middle", quarter * 2],
+    ["#activity-y-quarter", quarter],
+    ["#activity-y-zero", 0],
+  ];
+  yLabels.forEach(([selector, value]) => {
+    const element = document.querySelector(selector);
+    if (element) element.textContent = formatNumber(value);
+  });
+
+  dom.activityChart.innerHTML = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + index);
+    const dateKey = getLocalDateKey(date);
+    const dayName = new Intl.DateTimeFormat(undefined, { weekday: "short" }).format(date);
+    const calories = caloriesByDate.get(dateKey) || 0;
+    const value = formatNumber(calories);
     const fullDate = formatLocalLongDate(dateKey);
-    const isToday = day.toDateString() === now.toDateString();
     const isSelected = dateKey === selectedHistoryDate;
-    return `<button class="chart-day${isToday ? " today" : ""}${isSelected ? " selected" : ""}" type="button" data-activity-date="${dateKey}" aria-label="${escapeHtml(fullDate)}: ${formatNumber(count)} ${count === 1 ? "scan" : "scans"}. View food details" aria-pressed="${isSelected}" title="${count} ${count === 1 ? "scan" : "scans"}">
-      <span class="bar-track"><span class="bar-fill" style="height:${height}%"></span></span><span>${escapeHtml(dayName)}</span>
+    const isFuture = dateKey > todayKey;
+    return `<button class="activity-day${isSelected ? " selected" : ""}" type="button" data-activity-date="${dateKey}" style="--bar-height:${(calories / scaleMax) * 100}%" aria-label="${escapeHtml(fullDate)}: ${value} kcal. View food details" aria-pressed="${isSelected}" title="${value} kcal"${isFuture ? " disabled" : ""}>
+      <span class="activity-day-plot" aria-hidden="true"><span class="activity-value">${value}</span><span class="activity-bar"></span></span>
+      <span class="activity-day-label">${escapeHtml(dayName)}</span>
     </button>`;
   }).join("");
 }
@@ -2047,7 +2519,7 @@ function exportWeeklyCsv() {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = `nutritrack-week-${getLocalDateKey(new Date())}.csv`;
+  link.download = `nourish-week-${getLocalDateKey(new Date())}.csv`;
   document.body.append(link);
   link.click();
   link.remove();
@@ -2085,8 +2557,31 @@ function renderRecent() {
     action.addEventListener("click", openScan);
     return;
   }
-  dom.recentScans.innerHTML = recent.map((record) => scanRow(record, false)).join("");
+  dom.recentScans.innerHTML = recent.map((record) => quickAddRow(record)).join("");
   hydrateThumbnails(recent, dom.recentScans);
+}
+
+function renderFavorites() {
+  const favoriteRecords = favorites
+    .map((id) => records.find((record) => record.id === id))
+    .filter(Boolean)
+    .slice(0, 6);
+  if (!favoriteRecords.length) {
+    dom.favoritesScans.innerHTML = `<div class="favorites-empty">Open a meal and choose <strong>Favorite meal</strong> to add it here.</div>`;
+    return;
+  }
+  dom.favoritesScans.innerHTML = favoriteRecords.map((record) => quickAddRow(record)).join("");
+  hydrateThumbnails(favoriteRecords, dom.favoritesScans);
+}
+
+function quickAddRow(record) {
+  const label = escapeHtml(record.foodName || "Meal scan");
+  const id = escapeHtml(record.id);
+  return `<div class="quick-add-row" role="button" tabindex="0" data-record-id="${id}" aria-label="View ${label}, ${formatNumber(record.calories)} calories">
+    <div class="scan-thumb" data-thumb-id="${id}" aria-hidden="true"><svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="11"/><circle cx="16" cy="16" r="7"/><path d="M16 9v14"/></svg></div>
+    <div class="scan-copy"><p class="scan-name">${label}</p><span class="scan-meta">${escapeHtml(formatDate(record.createdAt))} · ${formatNumber(record.calories)} kcal</span></div>
+    <button class="button button-outline button-small" type="button" data-add-again-id="${id}" aria-label="Add ${label} again">Add again</button>
+  </div>`;
 }
 
 function renderHistory() {
@@ -2099,6 +2594,16 @@ function renderHistory() {
     const matchesDate = !date || getLocalDateKey(new Date(record.createdAt)) === date;
     return matchesSearch && matchesMeal && matchesDate;
   });
+  if (filtered.length < records.length) {
+    console.info("Scan history filters are hiding records.", {
+      ...getScanStorageDiagnosticContext(),
+      loadedRecords: records.length,
+      visibleRecords: filtered.length,
+      searchFilterActive: Boolean(search),
+      mealFilterActive: meal !== "all",
+      dateFilterActive: Boolean(date),
+    });
+  }
   dom.historyTotal.textContent = `${formatNumber(filtered.length)} ${filtered.length === 1 ? "scan" : "scans"}`;
   if (filtered.length === 0) {
     const hasFilters = Boolean(search || meal !== "all" || date);
@@ -2114,7 +2619,7 @@ function renderHistory() {
     return;
   }
   dom.historyList.innerHTML = filtered.map((record) => scanRow(record, true)).join("");
-  hydrateThumbnails(filtered.slice(0, 8), dom.historyList);
+  hydrateThumbnails(filtered, dom.historyList);
 }
 
 function renderDailyHistory() {
@@ -2191,7 +2696,7 @@ async function hydrateDailyImages(dayRecords) {
     try {
       const url = await getImageUrl(record.imagePath);
       if (element.isConnected) {
-        element.innerHTML = `<img src="${url}" alt="${escapeHtml(record.foodName || "Food entry")}">`;
+        element.innerHTML = `<img src="${escapeHtml(url)}" alt="${escapeHtml(record.foodName || "Food entry")}">`;
       }
     } catch (error) {
       console.warn("Could not load a daily history image.", error);
@@ -2288,6 +2793,15 @@ function getRecordKey(record) {
   return `${SCAN_PREFIX}${record.createdAt}:${record.id}`;
 }
 
+function getScanStorageDiagnosticContext() {
+  const accountUuid = currentUser && typeof currentUser.uuid === "string" ? currentUser.uuid : "";
+  return {
+    appOrigin: window.location.origin,
+    accountUuidSuffix: accountUuid ? accountUuid.slice(-6) : null,
+    scanKeyPrefix: SCAN_PREFIX,
+  };
+}
+
 function openEntryEditor(id) {
   const record = records.find((item) => item.id === id);
   if (!record) return;
@@ -2373,6 +2887,11 @@ async function saveDailyTarget(event) {
     dom.targetError.hidden = false;
     return;
   }
+  if (target < 1200 && !window.confirm(`${formatNumber(target)} kcal is below 1,200 kcal. Are you sure you want to set this low daily calorie target?`)) {
+    dom.targetError.textContent = "Target not changed. Confirm a higher target or choose “OK” to save.";
+    dom.targetError.hidden = false;
+    return;
+  }
   try {
     await puter.kv.set(getDailyTargetKey(), Math.round(target));
     dailyCalorieTarget = Math.round(target);
@@ -2393,7 +2912,7 @@ function scanRow(record, includeDelete) {
     ? `<button class="delete-scan" type="button" data-delete-id="${escapeHtml(record.id)}" aria-label="Delete ${label}" title="Delete scan"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14m-12 0 1 13h8l1-13M9 7V4h6v3m-5 4v5m4-5v5"/></svg></button>`
     : "";
   return `<div class="scan-row" role="button" tabindex="0" data-record-id="${escapeHtml(record.id)}" aria-label="View ${label}, ${formatNumber(record.calories)} calories">
-    <div class="scan-thumb" data-thumb-path="${escapeHtml(record.imagePath)}" aria-hidden="true"><svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="11"/><circle cx="16" cy="16" r="7"/><path d="M16 9v14"/></svg></div>
+    <div class="scan-thumb" data-thumb-id="${escapeHtml(record.id)}" aria-hidden="true"><svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="11"/><circle cx="16" cy="16" r="7"/><path d="M16 9v14"/></svg></div>
     <div class="scan-copy"><p class="scan-name">${label}</p><span class="scan-meta">${date} · ${formatNumber(record.protein)}g protein</span></div>
     <div class="history-row-actions"><span class="scan-calories">${formatNumber(record.calories)} kcal</span>${deleteMarkup}</div>
   </div>`;
@@ -2403,17 +2922,48 @@ function emptyState(title, message, buttonLabel) {
   return `<div class="empty-state"><div class="empty-state-art" aria-hidden="true"><svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="11"/><circle cx="16" cy="16" r="7"/><path d="M16 9v14"/></svg></div><h3>${escapeHtml(title)}</h3><p>${escapeHtml(message)}</p><button class="button button-outline" type="button" data-empty-scan>${escapeHtml(buttonLabel)}</button></div>`;
 }
 
-async function hydrateThumbnails(items, container) {
-  for (const record of items) {
-    const element = container.querySelector(`[data-thumb-path="${cssEscape(record.imagePath)}"]`);
-    if (!element || !record.imagePath) continue;
+function hydrateThumbnails(items, container) {
+  if (thumbnailObserver) thumbnailObserver.disconnect();
+  thumbnailObserver = null;
+  const targets = items
+    .filter((record) => record.imagePath)
+    .map((record) => ({
+      record,
+      element: container.querySelector(`[data-thumb-id="${cssEscape(record.id)}"]`),
+    }))
+    .filter(({ element }) => element);
+  if (!targets.length) return;
+
+  const loadThumbnail = async ({ record, element }) => {
     try {
       const url = await getImageUrl(record.imagePath);
-      if (element.isConnected) element.innerHTML = `<img src="${url}" alt="" loading="lazy">`;
+      if (element.isConnected) element.innerHTML = `<img src="${escapeHtml(url)}" alt="" loading="lazy">`;
     } catch (error) {
       console.warn("Could not load a saved scan thumbnail.", error);
     }
+  };
+
+  if (typeof IntersectionObserver === "undefined") {
+    targets.forEach((target) => loadThumbnail(target));
+    return;
   }
+
+  const targetByElement = new Map(targets.map((target) => [target.element, target]));
+  thumbnailObserver = new IntersectionObserver((entries, observer) => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue;
+      observer.unobserve(entry.target);
+      const target = targetByElement.get(entry.target);
+      targetByElement.delete(entry.target);
+      if (target) loadThumbnail(target);
+    }
+    if (!targetByElement.size) {
+      observer.disconnect();
+      if (thumbnailObserver === observer) thumbnailObserver = null;
+    }
+  }, { rootMargin: "200px" });
+
+  targets.forEach(({ element }) => thumbnailObserver.observe(element));
 }
 
 async function showDetails(id) {
@@ -2430,7 +2980,7 @@ async function showDetails(id) {
     const url = await getImageUrl(record.imagePath);
     const placeholder = dom.detailContent.querySelector(".detail-image-placeholder");
     if (placeholder && placeholder.isConnected) {
-      placeholder.outerHTML = `<img class="detail-image" src="${url}" alt="${escapeHtml(record.foodName)}">`;
+      placeholder.outerHTML = `<img class="detail-image" src="${escapeHtml(url)}" alt="${escapeHtml(record.foodName)}">`;
     }
   } catch (error) {
     const placeholder = dom.detailContent.querySelector(".detail-image-placeholder");
@@ -2442,28 +2992,61 @@ async function showDetails(id) {
 async function deleteScan(id) {
   const record = records.find((item) => item.id === id);
   if (!record) return;
-  if (!window.confirm(`Delete the scan for "${record.foodName}"? This also removes its saved image.`)) return;
+  const pendingId = createId();
+  records = records.filter((item) => item.id !== id);
+  renderDashboard();
+  renderHistory();
+  if (!dom.daily.hidden) renderDailyHistory();
+  const timeoutId = window.setTimeout(() => {
+    void permanentlyDeleteScan(pendingId);
+  }, 7000);
+  pendingDeletes.set(pendingId, { record, timeoutId });
+  showUndoToast(`Deleted "${record.foodName || "Meal scan"}".`, pendingId);
+}
+
+async function permanentlyDeleteScan(pendingId) {
+  const pending = pendingDeletes.get(pendingId);
+  if (!pending) return;
+  const { record } = pending;
+  pendingDeletes.delete(pendingId);
   try {
-    if (record.imagePath) await puter.fs.delete(record.imagePath);
     await puter.kv.del(`${SCAN_PREFIX}${record.createdAt}:${record.id}`);
-    records = records.filter((item) => item.id !== id);
-    const cachedUrl = imageUrlCache.get(record.imagePath);
-    if (cachedUrl) URL.revokeObjectURL(cachedUrl);
-    imageUrlCache.delete(record.imagePath);
-    renderDashboard();
-    renderHistory();
-    if (!dom.daily.hidden) renderDailyHistory();
-    showToast("The scan and its image were deleted.");
-  } catch (error) {
-    showToast(`Could not fully delete this scan: ${errorMessage(error, "storage request failed")}`, true);
-    try {
-      await loadRecords();
-      renderDashboard();
-      if (!dom.history.hidden) renderHistory();
-      if (!dom.daily.hidden) renderDailyHistory();
-    } catch (refreshError) {
-      showToast(`Could not refresh scan history: ${errorMessage(refreshError, "storage request failed")}`, true);
+    const imageStillReferenced = record.imagePath && records.some((item) => item.imagePath === record.imagePath);
+    const pendingImageStillReferenced = record.imagePath && Array.from(pendingDeletes.values()).some((item) => item.record.imagePath === record.imagePath);
+    if (record.imagePath && !imageStillReferenced && !pendingImageStillReferenced) {
+      await puter.fs.delete(record.imagePath);
+      const cachedUrl = imageUrlCache.get(record.imagePath);
+      if (cachedUrl) URL.revokeObjectURL(cachedUrl);
+      imageUrlCache.delete(record.imagePath);
     }
+  } catch (error) {
+    console.warn("Could not permanently delete a pending scan.", error);
+  }
+}
+
+function undoDelete() {
+  const pendingId = pendingDeleteUndoId;
+  if (!pendingId) return;
+  const pending = pendingDeletes.get(pendingId);
+  if (!pending) return;
+  window.clearTimeout(pending.timeoutId);
+  pendingDeletes.delete(pendingId);
+  if (!records.some((item) => item.id === pending.record.id)) {
+    records.push(pending.record);
+    records.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
+  pendingDeleteUndoId = null;
+  dom.toastUndo.hidden = true;
+  renderDashboard();
+  renderHistory();
+  if (!dom.daily.hidden) renderDailyHistory();
+  showToast("Deletion undone.");
+}
+
+function finalizePendingDeletesOnClose() {
+  for (const pendingId of pendingDeletes.keys()) {
+    window.clearTimeout(pendingDeletes.get(pendingId).timeoutId);
+    void permanentlyDeleteScan(pendingId);
   }
 }
 
@@ -2476,6 +3059,8 @@ async function getImageUrl(path) {
 }
 
 function revokeImageUrls() {
+  if (thumbnailObserver) thumbnailObserver.disconnect();
+  thumbnailObserver = null;
   for (const url of imageUrlCache.values()) URL.revokeObjectURL(url);
   imageUrlCache.clear();
 }
@@ -2532,10 +3117,26 @@ function clearScanError() {
 
 function showToast(message, isError) {
   clearTimeout(toastTimeout);
-  dom.toast.textContent = message;
+  dom.toastMessage.textContent = message;
+  dom.toastUndo.hidden = true;
+  pendingDeleteUndoId = null;
   dom.toast.classList.toggle("error", Boolean(isError));
   dom.toast.classList.add("show");
   toastTimeout = setTimeout(() => dom.toast.classList.remove("show"), 4200);
+}
+
+function showUndoToast(message, pendingId) {
+  clearTimeout(toastTimeout);
+  dom.toastMessage.textContent = message;
+  dom.toastUndo.hidden = false;
+  pendingDeleteUndoId = pendingId;
+  dom.toast.classList.remove("error");
+  dom.toast.classList.add("show");
+  toastTimeout = setTimeout(() => {
+    dom.toast.classList.remove("show");
+    dom.toastUndo.hidden = true;
+    if (pendingDeleteUndoId === pendingId) pendingDeleteUndoId = null;
+  }, 7000);
 }
 
 function errorMessage(error, fallback) {

@@ -1,18 +1,162 @@
-# Nourish
+# Calorie / Calorise / Nourish
 
-A browser-based calorie and nutrition tracker. Meal analysis and nutritionist chat use the Puter.js SDK and require each user to sign in with their own Puter account. No app-owned API key is required in the frontend.
+This repository contains a browser-based calorie and nutrition tracker built with React, Vite, vanilla JavaScript, and Puter.js.
 
-Meal reminders and scan alerts use browser notifications and need permission on each device over HTTPS. Scheduled reminders run while the app is open. On iPhone or iPad, add Nourish to the Home Screen before enabling notifications.
+The verified implementation uses inconsistent historical branding:
 
-## Run locally
+- Project/package: `nutritrack-ai-calories`
+- Visible auth/sidebar in the current markup: `Nourish`
+- React/loading and several assets: `Calorise`
+- Storage and notification identifiers: `nutritrack` or `nourish`
+
+Treat naming as an in-progress migration. Do not assume these names are interchangeable in storage keys or routes.
+
+## Key Features
+
+- Puter account sign-in.
+- Meal photo upload, drag/drop, mobile camera, and AI nutrition estimation.
+- Manual nutrition entry and Open Food Facts barcode lookup.
+- Saved scan history with search and filters.
+- Dynamic Monday-Sunday calorie chart based on actual scan records.
+- Daily history, calorie target, macros, water, and weight.
+- AI nutrition chat grounded in today's saved scans.
+- Profile, goals, theme, notification, and reminder settings.
+- CSV export and printable weekly report.
+- Desktop hover sidebar and mobile bottom navigation.
+- Light/dark themes and reduced-motion support.
+
+## Technology
+
+- React 19
+- Vite 7
+- Plain JavaScript controller
+- Plain HTML and CSS
+- Puter.js Auth/KV/FS/AI
+- Open Food Facts API
+- Browser Notification API
+- PWA manifest and minimal service worker
+
+No backend server, SQL schema, chart package, UI package, or state-management package is present.
+
+## Prerequisites
+
+- Node.js and npm.
+- A modern browser.
+- Internet access for Puter.js and external services.
+- A Puter account for app data and AI features.
+- HTTPS or `localhost` for notifications and some browser APIs.
+
+## Installation
 
 ```sh
 npm install
+```
+
+## Development
+
+```sh
 npm run dev
 ```
 
-Create a production build with `npm run build`.
+Open `http://localhost:5173`.
 
-## Included files
+Vite is configured for strict port `5173` and host `localhost`.
 
-The repository contains the app source and the minimum Vite configuration and package files needed to install, run, and build it. Dependencies and generated build output are excluded.
+Puter storage is origin-scoped. Different origins, ports, and domains can have separate data contexts.
+
+## Production Build
+
+```sh
+npm run build
+npm run preview
+```
+
+`dist/` contains generated build output. Do not edit it directly.
+
+There is no verified deployment platform configuration in the repository.
+
+## Environment Variables
+
+No environment variables are currently required or read by the application. The
+comment-only [`.env.example`](.env.example) records that setup explicitly; you do
+not need to create a local `.env` file to run the project.
+
+Puter.js is loaded from `https://js.puter.com/v2/`.
+Authentication, storage, and AI use the signed-in user's Puter session. The app
+does not require an app-owned AI or Open Food Facts key. Do not add private
+credentials to `VITE_*` variables: Vite embeds those values in browser assets.
+If a future integration needs a private credential, it must be handled by a
+trusted server-side component, not this client-only application.
+
+## Project Structure
+
+```text
+.
+├── AGENTS.md
+├── README.md
+├── CHANGELOG.md
+├── app.js
+├── index.html
+├── package.json
+├── package-lock.json
+├── styles.css
+├── vite.config.js
+├── public/
+│   ├── legacy.html
+│   ├── manifest.webmanifest
+│   ├── service-worker.js
+│   ├── food-bowl.webp
+│   ├── calorise-logo*.png
+│   └── food/
+└── src/
+    ├── main.jsx
+    ├── App.jsx
+    └── nourish.css
+```
+
+The React shell fetches `public/legacy.html`, then dynamically imports `app.js`.
+
+## Storage Overview
+
+- Scan records: Puter KV under `nutritrack:scan:`.
+- Profiles/preferences: account-scoped Puter KV keys.
+- Meal images: `nutritrack/scans/`.
+- Profile pictures: `nutritrack/profile-pictures/`.
+- Theme: browser `localStorage`.
+- Reminder delivery: browser `localStorage`.
+- Name prompt skip: browser `sessionStorage`.
+
+There is no verified SQL database or Supabase project.
+
+## Verification
+
+No automated test script is configured.
+
+At minimum, run:
+
+```sh
+npm run build
+git diff --check
+```
+
+Also manually verify:
+
+- Sign-in and sign-out.
+- Scan add/edit/repeat/delete.
+- Zero-activity and populated charts.
+- Daily and history routes.
+- Desktop/mobile sidebar behavior.
+- Light/dark theme.
+- Notification permission.
+- 320px-1440px layouts.
+
+## Documentation
+
+- [Agent Instructions](AGENTS.md)
+- [Product Requirements](docs/PRD.md)
+- [Design System](docs/DESIGN.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Features](docs/FEATURES.md)
+- [API and Integrations](docs/API.md)
+- [Database and Storage](docs/DATABASE.md)
+- [Change History](CHANGELOG.md)

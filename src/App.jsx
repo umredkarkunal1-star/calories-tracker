@@ -52,6 +52,24 @@ export default function App() {
     );
   }
 
-  if (!markup) return null;
+  if (!markup) {
+    return (
+      <main
+        role="status"
+        style={{
+          minHeight: "100vh",
+          display: "grid",
+          placeItems: "center",
+          padding: "24px",
+          color: "var(--color-ink)",
+          background: "var(--color-cream)",
+          fontFamily: "var(--font-sans)",
+        }}
+      >
+        Loading Nourish…
+      </main>
+    );
+  }
+
   return <div dangerouslySetInnerHTML={{ __html: markup }} />;
 }
