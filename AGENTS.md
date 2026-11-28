@@ -1,4 +1,4 @@
-# AGENTS.md - Calorie Project Agent Instructions
+# AGENTS.md - Calorise Project Agent Instructions
 
 ## 1. Purpose
 
@@ -39,14 +39,12 @@ Use this file before making changes. It is the primary source of repository-spec
 
 ## 4. Naming and Source Truth
 
-The repository has inconsistent historical branding:
+The sole user-facing product name is `Calorise`. The npm package is also named
+`calorise`.
 
-- User-facing markup varies between `Nourish` and `Calorise`.
-- `package.json` and package-lock retain `nutritrack-ai-calories`.
-- `app.js` constants, storage prefixes, notification keys, and filenames use `nutritrack` or `nourish`.
-- No single branding rename has been applied consistently.
-
-Do not assume a name is canonical. Inspect visible markup and metadata before renaming. Preserve existing user storage keys unless a migration is explicitly approved. Never silently alter Puter keys or app-origin data.
+Existing `nutritrack` and `nourish` storage prefixes are internal compatibility
+identifiers; preserve them unless a storage migration is explicitly approved.
+Never silently alter Puter keys or app-origin data.
 
 ## 5. Existing Architecture Rules
 

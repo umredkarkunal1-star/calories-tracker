@@ -2,14 +2,14 @@
 
 This changelog is based on verified Git history and source changes currently present. Pre-change UI rationale and uncommitted work are not invented.
 
-## 2026-11-22 - Nourish Wellness Redesign
+## 2026-11-22 - Calorise Wellness Redesign
 
 Commit: `9782879`
 
 Verified changes:
 
-- Reworked the application as a Nourish wellness dashboard.
-- Added the Nourish login-page design.
+- Reworked the application as a Calorise wellness dashboard.
+- Added the Calorise login-page design.
 - Updated README branding.
 - Expanded `app.js` scan-history and dashboard behavior.
 - Added `public/manifest.webmanifest`.
@@ -32,9 +32,16 @@ Verified changes:
 - Added base CSS.
 - Added initial calorie icon assets.
 
-## Verified Unreleased/Current Workspace Changes
+## 2026-11-28 - Calorise Brand Standardization
 
-The current working tree contains later edits that are not consolidated into a Git commit. Verified areas include:
+- Standardized user-facing names in the app, metadata, notifications, and reports to Calorise.
+- Renamed the private npm package to `calorise`.
+- Updated project documentation to use Calorise as the product name.
+- Preserved legacy `nutritrack` and `nourish` storage prefixes for user-data compatibility.
+
+## Additional Implemented Changes
+
+The repository also includes the following previously implemented work:
 
 - Logo and branding asset changes, including Calorise logo variants.
 - Sidebar hover/minimized behavior and mobile header adjustments.
@@ -45,9 +52,7 @@ The current working tree contains later edits that are not consolidated into a G
 - Replacement of hardcoded chart data with actual Puter scan-history aggregation.
 - Current-week and local-date chart behavior.
 - Responsive activity-chart labels and food decoration.
-- Mixed branding text across markup and metadata.
-
-These items should be released only after brand consistency is resolved and final manual verification is complete.
+- User-facing branding is now consistently Calorise; storage identifiers remain unchanged.
 
 ## Historical Information Unavailable
 

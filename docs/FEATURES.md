@@ -254,7 +254,7 @@
 ### Personal information
 
 - **Purpose:** Save username, contact email, and display name.
-- **Storage:** Account-scoped Nourish profile KV key.
+- **Storage:** Account-scoped Calorise profile KV key.
 - **Status:** Implemented.
 
 ### Profile picture

@@ -66,7 +66,7 @@ export default function App() {
           fontFamily: "var(--font-sans)",
         }}
       >
-        Loading Nourish…
+        Loading Calorise…
       </main>
     );
   }

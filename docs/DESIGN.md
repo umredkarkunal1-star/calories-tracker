@@ -4,12 +4,9 @@
 
 The design is warm, calm, health-oriented, and premium. The implemented system uses cream surfaces, deep botanical greens, muted sage, serif display headings, and restrained DM Sans interface text. The brand logo is a black/flame-style transparent PNG asset.
 
-Verified branding inconsistency:
-
-- The latest visible auth/sidebar markup in `public/legacy.html` includes Nourish text.
-- The React loading copy and app metadata include Calorise.
-- Package and storage identifiers use `Nutritrack`/`nutritrack`.
-- Do not assume an application-name rename is complete.
+Calorise is the sole user-facing product name across the interface, metadata,
+notifications, and reports. Legacy `nutritrack`/`nourish` storage prefixes are
+internal compatibility identifiers and are not branding.
 
 ## 2. Base Theme Colors
 
@@ -39,7 +36,7 @@ Actual values from `styles.css`:
 | `--carbs` | `#a3542f` |
 | `--fat` | `#85652f` |
 
-## 3. Nourish/Calorise Theme Colors
+## 3. Calorise Theme Colors
 
 Actual values from `src/nourish.css`:
 

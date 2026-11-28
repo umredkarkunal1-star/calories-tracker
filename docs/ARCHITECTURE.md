@@ -2,7 +2,7 @@
 
 ## 1. Application Pattern
 
-Calorie is a client-rendered, single-page application. React provides a thin shell, while application behavior is implemented imperatively in `app.js`.
+Calorise is a client-rendered, single-page application. React provides a thin shell, while application behavior is implemented imperatively in `app.js`.
 
 ```mermaid
 flowchart LR

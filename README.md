@@ -1,15 +1,10 @@
-# Calorie / Calorise / Nourish
+# Calorise
 
 This repository contains a browser-based calorie and nutrition tracker built with React, Vite, vanilla JavaScript, and Puter.js.
 
-The verified implementation uses inconsistent historical branding:
-
-- Project/package: `nutritrack-ai-calories`
-- Visible auth/sidebar in the current markup: `Nourish`
-- React/loading and several assets: `Calorise`
-- Storage and notification identifiers: `nutritrack` or `nourish`
-
-Treat naming as an in-progress migration. Do not assume these names are interchangeable in storage keys or routes.
+Calorise is the product's user-facing name. Existing `nutritrack` and `nourish`
+storage prefixes are retained as internal compatibility identifiers so saved
+user data continues to load.
 
 ## Key Features
 

@@ -1,4 +1,4 @@
-# calorise Login Page Design
+# Calorise Login Page Design
 
 ## Purpose
 
@@ -15,7 +15,7 @@ The interface uses an editorial wellness aesthetic: warm paper tones, leafy gree
 
 ## Desktop layout
 
-At wider viewports, the page is a two-part composition. The left panel contains the Nourish wordmark, a short sign-in headline, concise supportive copy, and the single primary action. The right panel carries the food illustration, with a translucent daily-calorie summary card layered over it. A small footer anchors the composition without competing with the login action.
+At wider viewports, the page is a two-part composition. The left panel contains the Calorise wordmark, a short sign-in headline, concise supportive copy, and the single primary action. The right panel carries the food illustration, with a translucent daily-calorie summary card layered over it. A small footer anchors the composition without competing with the login action.
 
 The primary action is a full-width dark-green **“Log in with Puter”** button. A short note beneath explains that Puter handles authentication and that users do not need another password.
 

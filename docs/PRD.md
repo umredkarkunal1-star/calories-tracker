@@ -2,9 +2,8 @@
 
 ## Product Status
 
-**Product name in request:** Calorie  
-**Verified repository/package name:** `nutritrack-ai-calories`  
-**Verified branded UI wording:** mixed between `Nourish` and `Calorise`; `public/manifest.webmanifest` says `Nourish`, while some React/loading copy and logos use Calorise.
+**Product name:** Calorise
+**Package name:** `calorise`
 
 This document describes implemented behavior from the source code. Items not found in the source are marked planned or unknown.
 
@@ -41,7 +40,7 @@ Provide a calm, premium calorie and nutrition dashboard where a signed-in user c
 
 **Behind the scenes:** `puter.auth.isSignedIn()`, `getUser()`, `getProfile()`, Puter KV profile lookup, and full `loadRecords()` pagination.
 
-**Mobile presentation:** At widths 320px-767px, the login page uses a compact Nourish header with a text Help action, a large rounded yogurt-bowl image, a cream login card, and a supporting footer. The desktop login layout remains unchanged at 768px and above. Mobile styling does not alter Puter authentication, loading, or error behavior.
+**Mobile presentation:** At widths 320px-767px, the login page uses a compact Calorise header with a text Help action, a large rounded yogurt-bowl image, a cream login card, and a supporting footer. The desktop login layout remains unchanged at 768px and above. Mobile styling does not alter Puter authentication, loading, or error behavior.
 
 ### 3.2 Overview
 
