@@ -68,7 +68,9 @@ npm run preview
 
 `dist/` contains generated build output. Do not edit it directly.
 
-There is no verified deployment platform configuration in the repository.
+On Netlify, `public/_redirects` is copied into `dist/` by Vite. It rewrites direct
+visits and reloads on app routes to `index.html` without changing the URL. Add a
+matching rewrite when adding a new client-side route.
 
 ## Environment Variables
 
